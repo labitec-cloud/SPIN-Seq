@@ -9,6 +9,13 @@ Model weights (`.pt`, ~265 MB) are not versioned; every number that does not req
 > **Language note.** `README.md` is in Portuguese, matching the development history. This file is
 > in English, matching the paper.
 
+![SPIN-Seq pipeline](figures/fig1_pipeline.png)
+
+*Above the barrier, the input path, entirely derivable from the sequence. Below it, the
+supervision. `pdbe-arpeggio` reads the 3D structure, but its labels reach the model only through
+the training loss; at inference the lower half is absent. Source: `figures/fig1_pipeline.tex`
+(TikZ, as published in the paper).*
+
 ---
 
 ## 0. The two-minute check
