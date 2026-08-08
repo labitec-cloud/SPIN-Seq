@@ -1,0 +1,29 @@
+/home/wyllgner/Documentos/artigo/bio/src/bootstrap_ci.py:49: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  ck = torch.load(args.ckpt, map_location=device)
+   predição 100/494
+   predição 200/494
+   predição 300/494
+   predição 400/494
+>> conv2d ckpt=outputs/conv2d_650m_aa/best.pt cadeias=494 B=1000
+   bootstrap 100/1000
+   bootstrap 200/1000
+   bootstrap 300/1000
+   bootstrap 400/1000
+   bootstrap 500/1000
+   bootstrap 600/1000
+   bootstrap 700/1000
+   bootstrap 800/1000
+   bootstrap 900/1000
+   bootstrap 1000/1000
+
+métrica        ponto  IC95 low  IC95 high       ±
+contact        0.815     0.801      0.829   0.014
+hbond          0.069     0.049      0.097   0.024
+polar          0.796     0.782      0.809   0.014
+ionic          0.394     0.370      0.416   0.023
+aromatic       0.461     0.432      0.490   0.029
+hydrophobic    0.599     0.583      0.615   0.016
+carbonyl       0.359     0.339      0.378   0.020
+vdw            0.681     0.667      0.695   0.014
+covalent       0.801     0.727      0.868   0.070
+MACRO          0.520     0.506      0.535   0.014

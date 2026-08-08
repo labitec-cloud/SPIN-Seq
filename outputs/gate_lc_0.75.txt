@@ -1,0 +1,34 @@
+>> model=conv2d ckpt=outputs/lc_conv2d_0.75/best.pt tipos_no_ckpt=['hbond', 'polar', 'ionic', 'aromatic', 'hydrophobic', 'carbonyl', 'vdw', 'covalent']
+>> split=test cadeias=494 tipos_avaliados=['hbond', 'polar', 'ionic', 'aromatic', 'hydrophobic', 'carbonyl', 'vdw', 'covalent']
+
+== AVALIAÇÃO DENSA (test, conv2d) — todos os pares válidos ==
+AUPRC_contact     = 0.809
+AUPRC_types_macro = 0.509
+classe        AUPRC  L  L/2  L/5  (long-range)
+contact       0.809  0.641  0.784  0.862
+hbond         0.068  0.013  0.022  0.041
+polar         0.791  0.218  0.360  0.564
+ionic         0.377  0.020  0.038  0.087
+aromatic      0.431  0.021  0.041  0.096
+hydrophobic   0.590  0.329  0.506  0.675
+carbonyl      0.354  0.047  0.091  0.204
+vdw           0.676  0.179  0.291  0.476
+covalent      0.782  0.017  0.033  0.083
+
+== Top-L por faixa de separação (contato) ==
+faixa    L  L/2  L/5
+short    0.298  0.526  0.794
+medium   0.386  0.615  0.826
+long     0.641  0.784  0.862
+all      0.956  0.976  0.986
+
+== Top-L (L) por classe x faixa de separação ==
+classe         short   medium     long      all
+hbond          0.013    0.014    0.013    0.028
+polar          0.082    0.116    0.218    0.781
+ionic          0.011    0.011    0.020    0.039
+aromatic       0.010    0.012    0.021    0.032
+hydrophobic    0.111    0.148    0.329    0.528
+carbonyl       0.023    0.030    0.047    0.091
+vdw            0.067    0.094    0.179    0.586
+covalent       0.011    0.021    0.017    0.023

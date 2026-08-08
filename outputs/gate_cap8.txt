@@ -1,0 +1,35 @@
+  ck = torch.load(args.ckpt, map_location=device)
+>> model=conv2d ckpt=outputs/conv2d_650m_cap8/best.pt tipos_no_ckpt=['hbond', 'polar', 'ionic', 'aromatic', 'hydrophobic', 'carbonyl', 'vdw', 'covalent']
+>> split=test cadeias=494 tipos_avaliados=['hbond', 'polar', 'ionic', 'aromatic', 'hydrophobic', 'carbonyl', 'vdw', 'covalent']
+
+== AVALIAÇÃO DENSA (test, conv2d) — todos os pares válidos ==
+AUPRC_contact     = 0.815
+AUPRC_types_macro = 0.460
+classe        AUPRC  L  L/2  L/5  (long-range)
+contact       0.815  0.647  0.787  0.862
+hbond         0.053  0.013  0.021  0.039
+polar         0.794  0.218  0.360  0.567
+ionic         0.270  0.019  0.036  0.080
+aromatic      0.204  0.020  0.036  0.077
+hydrophobic   0.574  0.327  0.500  0.664
+carbonyl      0.341  0.048  0.092  0.205
+vdw           0.677  0.178  0.292  0.483
+covalent      0.764  0.017  0.033  0.083
+
+== Top-L por faixa de separação (contato) ==
+faixa    L  L/2  L/5
+short    0.300  0.530  0.804
+medium   0.388  0.617  0.827
+long     0.647  0.787  0.862
+all      0.958  0.977  0.987
+
+== Top-L (L) por classe x faixa de separação ==
+classe         short   medium     long      all
+hbond          0.013    0.014    0.013    0.027
+polar          0.082    0.117    0.218    0.783
+ionic          0.010    0.011    0.019    0.037
+aromatic       0.010    0.012    0.020    0.029
+hydrophobic    0.111    0.148    0.327    0.518
+carbonyl       0.023    0.030    0.048    0.091
+vdw            0.068    0.095    0.178    0.587
+covalent       0.011    0.021    0.017    0.023

@@ -1,0 +1,21 @@
+>> cadeias: treino=3962 val=495 | crop=64 n_types=8 tipos=['hbond', 'polar', 'ionic', 'aromatic', 'hydrophobic', 'carbonyl', 'vdw', 'covalent']
+>> perda de tipos: ASL gamma_pos=0.0 gamma_neg=4.0 clip=0.05
+>> SS auxiliar: canal de par mesma-hélice/folha + head aux (lambda_ss=0.3)
+>> class_weight: hbond:5.82 polar:1.00 ionic:5.35 aromatic:6.27 hydrophobic:1.17 carbonyl:3.32 vdw:1.17 covalent:8.00
+ep  1 trL=0.259 vaL=0.205 AUPRC_contact=0.84 AUPRC_types_macro=0.34 | hbond:0.03 polar:0.82 ionic:0.11 aromatic:0.07 hydrophobic:0.52 carbonyl:0.34 vdw:0.70 covalent:0.13
+ep  5 trL=0.194 vaL=0.191 AUPRC_contact=0.88 AUPRC_types_macro=0.51 | hbond:0.08 polar:0.86 ionic:0.37 aromatic:0.46 hydrophobic:0.60 carbonyl:0.39 vdw:0.76 covalent:0.57
+>> cadeias: treino=3962 val=495 | crop=64 n_types=8 tipos=['hbond', 'polar', 'ionic', 'aromatic', 'hydrophobic', 'carbonyl', 'vdw', 'covalent']
+>> perda de tipos: ASL gamma_pos=0.0 gamma_neg=4.0 clip=0.05
+>> SS auxiliar: canal de par mesma-hélice/folha + head aux (lambda_ss=0.3)
+>> class_weight: hbond:5.82 polar:1.00 ionic:5.35 aromatic:6.27 hydrophobic:1.17 carbonyl:3.32 vdw:1.17 covalent:8.00
+/home/wyllgner/Documentos/artigo/bio/src/train_conv2d.py:147: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  ck = torch.load(ckpt_path, map_location=device)
+/home/wyllgner/Documentos/artigo/bio/.venv/lib/python3.12/site-packages/torch/optim/lr_scheduler.py:224: UserWarning: Detected call of `lr_scheduler.step()` before `optimizer.step()`. In PyTorch 1.1.0 and later, you should call them in the opposite order: `optimizer.step()` before `lr_scheduler.step()`.  Failure to do this will result in PyTorch skipping the first value of the learning rate schedule. See more details at https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
+  warnings.warn(
+>> retomando de last.pt: proxima epoca=6 best=0.511
+ep 10 trL=0.184 vaL=0.187 AUPRC_contact=0.89 AUPRC_types_macro=0.55 | hbond:0.08 polar:0.87 ionic:0.41 aromatic:0.53 hydrophobic:0.62 carbonyl:0.40 vdw:0.77 covalent:0.71
+ep 15 trL=0.179 vaL=0.187 AUPRC_contact=0.89 AUPRC_types_macro=0.56 | hbond:0.10 polar:0.87 ionic:0.41 aromatic:0.54 hydrophobic:0.63 carbonyl:0.41 vdw:0.77 covalent:0.74
+ep 20 trL=0.175 vaL=0.189 AUPRC_contact=0.89 AUPRC_types_macro=0.56 | hbond:0.11 polar:0.87 ionic:0.42 aromatic:0.54 hydrophobic:0.63 carbonyl:0.41 vdw:0.77 covalent:0.75
+ep 25 trL=0.172 vaL=0.189 AUPRC_contact=0.89 AUPRC_types_macro=0.57 | hbond:0.12 polar:0.87 ionic:0.42 aromatic:0.54 hydrophobic:0.63 carbonyl:0.42 vdw:0.77 covalent:0.76
+ep 30 trL=0.172 vaL=0.189 AUPRC_contact=0.89 AUPRC_types_macro=0.57 | hbond:0.12 polar:0.87 ionic:0.42 aromatic:0.55 hydrophobic:0.63 carbonyl:0.42 vdw:0.77 covalent:0.76
+>> melhor AUPRC_types_macro=0.569 salvo em outputs/conv2d_650m_aa_ss/best.pt

@@ -1,0 +1,30 @@
+/home/wyllgner/Documentos/artigo/bio/src/analyze_rin.py:117: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  ck = torch.load(args.ckpt, map_location=device)
+>> split=test cadeias=494 tipos=['hbond', 'polar', 'ionic', 'aromatic', 'hydrophobic', 'carbonyl', 'vdw', 'covalent']
+
+== A) SÓ RÓTULOS — pares=5,176,314 contatos=206,700 (3.99% dos pares) ==
+tipos por aresta de contato: media=1.06 mediana=1 max=6
+  distribuicao (# tipos: % das arestas): 0:36.9%  1:31.3%  2:22.1%  3:8.5%  4:1.0%  5:0.1%  6:0.0%
+
+classe       p(tipo|contato)  H(tipo|contato) bits
+hbond                 0.0100                0.0807
+polar                 0.4008                0.9714
+ionic                 0.0137                0.1047
+aromatic              0.0094                0.0766
+hydrophobic           0.2946                0.8746
+carbonyl              0.0352                0.2199
+vdw                   0.2918                0.8710
+covalent              0.0008                0.0097
+SOMA                                        3.2085  (bits que o contact map NAO resolve por aresta)
+
+== B) RANKERS — AUPRC por classe (test denso) ==
+classe       prevalence     oracle  p_contact        RIN  RIN-oracle
+hbond             0.000      0.010      0.011      0.073      +0.063
+polar             0.016      0.401      0.745      0.835      +0.435
+ionic             0.001      0.014      0.011      0.412      +0.398
+aromatic          0.000      0.009      0.006      0.462      +0.452
+hydrophobic       0.012      0.295      0.214      0.614      +0.319
+carbonyl          0.001      0.035      0.065      0.397      +0.362
+vdw               0.012      0.292      0.484      0.723      +0.431
+covalent          0.000      0.001      0.001      0.848      +0.847
+MACRO             0.005      0.132      0.192      0.545      +0.413

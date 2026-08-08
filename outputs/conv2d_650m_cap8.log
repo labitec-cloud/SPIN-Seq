@@ -1,0 +1,17 @@
+>> cadeias: treino=3962 val=495 | crop=64 n_types=8 tipos=['hbond', 'polar', 'ionic', 'aromatic', 'hydrophobic', 'carbonyl', 'vdw', 'covalent']
+>> class_weight: hbond:5.82 polar:1.00 ionic:5.35 aromatic:6.27 hydrophobic:1.17 carbonyl:3.32 vdw:1.17 covalent:8.00
+ep  1 trL=0.136 vaL=0.107 AUPRC_contact=0.83 AUPRC_types_macro=0.28 | hbond:0.02 polar:0.79 ionic:0.04 aromatic:0.01 hydrophobic:0.48 carbonyl:0.26 vdw:0.67 covalent:0.00
+ep  5 trL=0.094 vaL=0.096 AUPRC_contact=0.85 AUPRC_types_macro=0.42 | hbond:0.06 polar:0.83 ionic:0.23 aromatic:0.16 hydrophobic:0.57 carbonyl:0.33 vdw:0.72 covalent:0.48
+/home/wyllgner/Documentos/artigo/bio/src/train_conv2d.py:125: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  ck = torch.load(ckpt_path, map_location=device)
+/home/wyllgner/Documentos/artigo/bio/.venv/lib/python3.12/site-packages/torch/optim/lr_scheduler.py:224: UserWarning: Detected call of `lr_scheduler.step()` before `optimizer.step()`. In PyTorch 1.1.0 and later, you should call them in the opposite order: `optimizer.step()` before `lr_scheduler.step()`.  Failure to do this will result in PyTorch skipping the first value of the learning rate schedule. See more details at https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
+  warnings.warn(
+>> cadeias: treino=3962 val=495 | crop=64 n_types=8 tipos=['hbond', 'polar', 'ionic', 'aromatic', 'hydrophobic', 'carbonyl', 'vdw', 'covalent']
+>> class_weight: hbond:5.82 polar:1.00 ionic:5.35 aromatic:6.27 hydrophobic:1.17 carbonyl:3.32 vdw:1.17 covalent:8.00
+>> retomando de last.pt: proxima epoca=8 best=0.447
+ep 10 trL=0.085 vaL=0.094 AUPRC_contact=0.86 AUPRC_types_macro=0.46 | hbond:0.07 polar:0.84 ionic:0.27 aromatic:0.23 hydrophobic:0.58 carbonyl:0.35 vdw:0.73 covalent:0.64
+ep 15 trL=0.080 vaL=0.094 AUPRC_contact=0.86 AUPRC_types_macro=0.47 | hbond:0.07 polar:0.84 ionic:0.28 aromatic:0.25 hydrophobic:0.59 carbonyl:0.35 vdw:0.73 covalent:0.68
+ep 20 trL=0.076 vaL=0.097 AUPRC_contact=0.86 AUPRC_types_macro=0.48 | hbond:0.07 polar:0.84 ionic:0.27 aromatic:0.25 hydrophobic:0.59 carbonyl:0.35 vdw:0.73 covalent:0.71
+ep 25 trL=0.074 vaL=0.098 AUPRC_contact=0.86 AUPRC_types_macro=0.48 | hbond:0.08 polar:0.84 ionic:0.28 aromatic:0.25 hydrophobic:0.58 carbonyl:0.35 vdw:0.73 covalent:0.70
+>> early stopping na epoca 29 (sem melhora ha 8 epocas)
+>> melhor AUPRC_types_macro=0.477 salvo em outputs/conv2d_650m_cap8/best.pt

@@ -1,0 +1,11 @@
+  ck = torch.load(args.ckpt, map_location=device)
+>> pares válidos=5,176,314 | polar-positivos=82,837 | hbond-positivos=2,063
+
+== hbond ==
+AUPRC(hbond | todos os pares)      = 0.0690   (número do portão)
+prevalência de hbond DENTRO de polar = 0.0242   (piso do acaso)
+AUPRC(hbond | polar), head de hbond  = 0.0928
+AUPRC(hbond | polar), head de polar  = 0.0201   (score de polar)
+
+lift sobre o acaso dentro de polar   = +0.0686
+VEREDITO: acima do acaso → há sinal recuperável (reduce/DSSP justificados).

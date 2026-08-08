@@ -1,0 +1,9 @@
+>>> 04:36 portão de outputs/conv2d_650m_aa_s43 -> outputs/gate_passo3_s43.txt
+>>> 04:37 ok: AUPRC_types_macro = 0.515
+>>> 04:37 portão de outputs/conv2d_650m_aa_s44 -> outputs/gate_passo3_s44.txt
+>>> 04:38 ok: AUPRC_types_macro = 0.518
+>>> 04:38 portão de outputs/conv2d_ssaux_s43 -> outputs/gate_ssaux_s43.txt
+>>> 04:39 ok: AUPRC_types_macro = 0.526
+>>> 04:39 portão de outputs/conv2d_ssaux_s44 -> outputs/gate_ssaux_s44.txt
+>>> 04:40 ok: AUPRC_types_macro = 0.519
+>>> 04:40 TODOS OS PORTÕES CONCLUÍDOS

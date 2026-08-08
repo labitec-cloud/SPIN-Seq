@@ -1,0 +1,36 @@
+/home/wyllgner/Documentos/artigo/bio/src/eval_dense.py:112: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  ck = torch.load(args.ckpt, map_location=device)
+>> model=conv2d ckpt=outputs/conv2d_ssaux/best.pt tipos_no_ckpt=['hbond', 'polar', 'ionic', 'aromatic', 'hydrophobic', 'carbonyl', 'vdw', 'covalent']
+>> split=test cadeias=494 tipos_avaliados=['hbond', 'polar', 'ionic', 'aromatic', 'hydrophobic', 'carbonyl', 'vdw', 'covalent']
+
+== AVALIAÇÃO DENSA (test, conv2d) — todos os pares válidos ==
+AUPRC_contact     = 0.816
+AUPRC_types_macro = 0.525
+classe        AUPRC  L  L/2  L/5  (long-range)
+contact       0.816  0.649  0.791  0.866
+hbond         0.072  0.013  0.022  0.040
+polar         0.798  0.222  0.365  0.574
+ionic         0.405  0.021  0.040  0.091
+aromatic      0.454  0.021  0.042  0.097
+hydrophobic   0.596  0.331  0.509  0.680
+carbonyl      0.362  0.048  0.093  0.210
+vdw           0.682  0.181  0.294  0.488
+covalent      0.830  0.017  0.034  0.085
+
+== Top-L por faixa de separação (contato) ==
+faixa    L  L/2  L/5
+short    0.300  0.530  0.802
+medium   0.388  0.619  0.829
+long     0.649  0.791  0.866
+all      0.957  0.974  0.984
+
+== Top-L (L) por classe x faixa de separação ==
+classe         short   medium     long      all
+hbond          0.013    0.014    0.013    0.028
+polar          0.082    0.117    0.222    0.785
+ionic          0.011    0.011    0.021    0.040
+aromatic       0.010    0.012    0.021    0.032
+hydrophobic    0.111    0.148    0.331    0.531
+carbonyl       0.023    0.030    0.048    0.092
+vdw            0.068    0.094    0.181    0.589
+covalent       0.011    0.021    0.017    0.024

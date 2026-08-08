@@ -1,0 +1,39 @@
+/home/wyllgner/Documentos/artigo/bio/src/bootstrap_ci.py:87: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  ck = torch.load(ckpt_path, map_location=device)
+   [A] predição 100/494
+   [A] predição 200/494
+   [A] predição 300/494
+   [A] predição 400/494
+   [A] predições salvas em outputs/pred_cache/pred_conv2d_650m_aa_s44_best_test.npz
+   [B] predição 100/494
+   [B] predição 200/494
+   [B] predição 300/494
+   [B] predição 400/494
+   [B] predições salvas em outputs/pred_cache/pred_conv2d_ssaux_s44_best_test.npz
+>> A=outputs/conv2d_650m_aa_s44/best.pt B=outputs/conv2d_ssaux_s44/best.pt cadeias=494 B=1000
+>> ap_hist vs sklearn (estimativa pontual): max |Δ| = 2.22e-16
+   bootstrap pareado 100/1000
+   bootstrap pareado 200/1000
+   bootstrap pareado 300/1000
+   bootstrap pareado 400/1000
+   bootstrap pareado 500/1000
+   bootstrap pareado 600/1000
+   bootstrap pareado 700/1000
+   bootstrap pareado 800/1000
+   bootstrap pareado 900/1000
+   bootstrap pareado 1000/1000
+
+== DELTA PAREADO (B - A), test, B=1000 ==
+métrica            A       B   delta  IC95 low  IC95 high       p  sig
+contact        0.815   0.818  +0.003     0.001      0.004   0.001    *
+hbond          0.066   0.065  -0.001    -0.009      0.005   0.804     
+polar          0.797   0.800  +0.003     0.001      0.004   0.001    *
+ionic          0.378   0.408  +0.030     0.018      0.043   0.001    *
+aromatic       0.449   0.447  -0.002    -0.015      0.011   0.792     
+hydrophobic    0.596   0.595  -0.001    -0.003      0.001   0.446     
+carbonyl       0.358   0.360  +0.001    -0.006      0.008   0.692     
+vdw            0.680   0.684  +0.004     0.002      0.006   0.001    *
+covalent       0.814   0.793  -0.020    -0.062      0.022   0.334     
+MACRO          0.517   0.519  +0.002    -0.004      0.008   0.588     
+
+* = IC95 do delta não cruza zero.

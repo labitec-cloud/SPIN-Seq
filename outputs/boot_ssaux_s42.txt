@@ -1,0 +1,29 @@
+   [A] predições do cache: outputs/pred_cache/pred_conv2d_650m_aa_best_test.npz
+   [B] predições do cache: outputs/pred_cache/pred_conv2d_ssaux_best_test.npz
+>> A=outputs/conv2d_650m_aa/best.pt B=outputs/conv2d_ssaux/best.pt cadeias=494 B=1000
+>> ap_hist vs sklearn (estimativa pontual): max |Δ| = 2.22e-16
+   bootstrap pareado 100/1000
+   bootstrap pareado 200/1000
+   bootstrap pareado 300/1000
+   bootstrap pareado 400/1000
+   bootstrap pareado 500/1000
+   bootstrap pareado 600/1000
+   bootstrap pareado 700/1000
+   bootstrap pareado 800/1000
+   bootstrap pareado 900/1000
+   bootstrap pareado 1000/1000
+
+== DELTA PAREADO (B - A), test, B=1000 ==
+métrica            A       B   delta  IC95 low  IC95 high       p  sig
+contact        0.815   0.816  +0.001    -0.000      0.003   0.088     
+hbond          0.069   0.072  +0.003    -0.004      0.009   0.366     
+polar          0.796   0.798  +0.002     0.000      0.004   0.008    *
+ionic          0.394   0.405  +0.011     0.001      0.022   0.038    *
+aromatic       0.461   0.454  -0.007    -0.023      0.007   0.324     
+hydrophobic    0.599   0.596  -0.003    -0.005     -0.001   0.002    *
+carbonyl       0.359   0.362  +0.003    -0.005      0.010   0.458     
+vdw            0.681   0.681  +0.000    -0.002      0.003   0.902     
+covalent       0.801   0.830  +0.029    -0.009      0.067   0.144     
+MACRO          0.520   0.525  +0.005    -0.001      0.010   0.104     
+
+* = IC95 do delta não cruza zero.

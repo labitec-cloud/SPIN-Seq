@@ -1,0 +1,10 @@
+>> cadeias: treino=3962 val=495 | crop=64 n_types=8 tipos=['hbond', 'polar', 'ionic', 'aromatic', 'hydrophobic', 'carbonyl', 'vdw', 'covalent']
+>> perda de tipos: ASL gamma_pos=0.0 gamma_neg=4.0 clip=0.05
+>> class_weight: hbond:5.82 polar:1.00 ionic:5.35 aromatic:6.27 hydrophobic:1.17 carbonyl:3.32 vdw:1.17 covalent:8.00
+ep  1 trL=0.130 vaL=0.105 AUPRC_contact=0.84 AUPRC_types_macro=0.36 | hbond:0.04 polar:0.82 ionic:0.13 aromatic:0.12 hydrophobic:0.53 carbonyl:0.31 vdw:0.69 covalent:0.26
+ep  5 trL=0.087 vaL=0.101 AUPRC_contact=0.85 AUPRC_types_macro=0.51 | hbond:0.08 polar:0.84 ionic:0.35 aromatic:0.45 hydrophobic:0.59 carbonyl:0.35 vdw:0.73 covalent:0.69
+ep 10 trL=0.076 vaL=0.106 AUPRC_contact=0.85 AUPRC_types_macro=0.52 | hbond:0.08 polar:0.84 ionic:0.37 aromatic:0.50 hydrophobic:0.60 carbonyl:0.37 vdw:0.73 covalent:0.70
+ep 15 trL=0.069 vaL=0.112 AUPRC_contact=0.85 AUPRC_types_macro=0.53 | hbond:0.12 polar:0.83 ionic:0.38 aromatic:0.49 hydrophobic:0.60 carbonyl:0.37 vdw:0.72 covalent:0.70
+ep 20 trL=0.064 vaL=0.122 AUPRC_contact=0.84 AUPRC_types_macro=0.52 | hbond:0.11 polar:0.83 ionic:0.37 aromatic:0.49 hydrophobic:0.60 carbonyl:0.37 vdw:0.72 covalent:0.67
+>> early stopping na epoca 24 (sem melhora ha 8 epocas)
+>> melhor AUPRC_types_macro=0.527 salvo em outputs/conv2d_proj128/best.pt

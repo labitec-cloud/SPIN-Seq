@@ -1,0 +1,38 @@
+>> baseline=propensão aa_i x aa_j x faixa(|i-j|) treino=3962 cadeias alpha=50
+   100 cadeias pontuadas
+   200 cadeias pontuadas
+   300 cadeias pontuadas
+   400 cadeias pontuadas
+>> split=test cadeias=494 tipos_avaliados=['hbond', 'polar', 'ionic', 'aromatic', 'hydrophobic', 'carbonyl', 'vdw', 'covalent']
+
+== AVALIAÇÃO DENSA (test, propensão) — todos os pares válidos ==
+AUPRC_contact     = 0.276
+AUPRC_types_macro = 0.110
+classe        AUPRC  L  L/2  L/5  (long-range)
+contact       0.276  0.102  0.111  0.126
+hbond         0.014  0.005  0.007  0.009
+polar         0.299  0.022  0.027  0.035
+ionic         0.083  0.015  0.019  0.025
+aromatic      0.077  0.020  0.033  0.053
+hydrophobic   0.098  0.074  0.081  0.090
+carbonyl      0.009  0.004  0.004  0.004
+vdw           0.210  0.021  0.025  0.034
+covalent      0.092  0.017  0.034  0.084
+
+== Top-L por faixa de separação (contato) ==
+faixa    L  L/2  L/5
+short    0.121  0.148  0.159
+medium   0.117  0.132  0.149
+long     0.102  0.111  0.126
+all      0.519  0.558  0.595
+
+== Top-L (L) por classe x faixa de separação ==
+classe         short   medium     long      all
+hbond          0.009    0.007    0.005    0.015
+polar          0.028    0.024    0.022    0.424
+ionic          0.011    0.011    0.015    0.029
+aromatic       0.010    0.012    0.020    0.030
+hydrophobic    0.073    0.078    0.074    0.150
+carbonyl       0.008    0.006    0.004    0.018
+vdw            0.025    0.021    0.021    0.313
+covalent       0.011    0.021    0.017    0.024

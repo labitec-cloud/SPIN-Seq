@@ -1,0 +1,13 @@
+>>> 13:11 iniciando outputs/conv2d_650m_aa_s43 (seed=43, configs/esm650m_aa.yaml)
+>>> 15:01 concluído outputs/conv2d_650m_aa_s43: >> melhor AUPRC_types_macro=0.540 salvo em outputs/conv2d_650m_aa_s43/best.pt
+>>> 15:01 iniciando outputs/conv2d_650m_aa_s44 (seed=44, configs/esm650m_aa.yaml)
+>>> PULANDO outputs/conv2d_650m_aa_s43 (treino já concluído)
+>>> 18:01 RETOMANDO outputs/conv2d_650m_aa_s44 (seed=44) de last.pt
+>>> PULANDO outputs/conv2d_650m_aa_s43 (treino já concluído)
+>>> 19:04 RETOMANDO outputs/conv2d_650m_aa_s44 (seed=44) de last.pt
+>>> 20:32 concluído outputs/conv2d_650m_aa_s44: >> melhor AUPRC_types_macro=0.542 salvo em outputs/conv2d_650m_aa_s44/best.pt
+>>> 20:32 iniciando outputs/conv2d_ssaux_s43 (seed=43, configs/esm650m_aa_ssaux.yaml)
+>>> 23:10 concluído outputs/conv2d_ssaux_s43: >> melhor AUPRC_types_macro=0.544 salvo em outputs/conv2d_ssaux_s43/best.pt
+>>> 23:10 iniciando outputs/conv2d_ssaux_s44 (seed=44, configs/esm650m_aa_ssaux.yaml)
+>>> 01:35 concluído outputs/conv2d_ssaux_s44: >> melhor AUPRC_types_macro=0.542 salvo em outputs/conv2d_ssaux_s44/best.pt
+>>> 01:35 TODOS OS TREINOS CONCLUÍDOS

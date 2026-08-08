@@ -1,0 +1,17 @@
+/home/wyllgner/Documentos/artigo/bio/.venv/lib/python3.12/site-packages/pydssp/pydssp_numpy.py:30: RuntimeWarning: invalid value encountered in divide
+  vec_can = vec_can / np.linalg.norm(vec_can, axis=-1, keepdims=True)
+/home/wyllgner/Documentos/artigo/bio/.venv/lib/python3.12/site-packages/pydssp/pydssp_numpy.py:59: RuntimeWarning: divide by zero encountered in divide
+  e = np.pad(CONST_Q1Q2 * (1./d_on + 1./d_ch - 1./d_oh - 1./d_cn)*CONST_F, [[0,0],[1,0],[0,1]])
+  500/4953
+  1000/4953
+  1500/4953
+  2000/4953
+/home/wyllgner/Documentos/artigo/bio/.venv/lib/python3.12/site-packages/pydssp/pydssp_numpy.py:28: RuntimeWarning: invalid value encountered in divide
+  vec_cn = vec_cn / np.linalg.norm(vec_cn, axis=-1, keepdims=True)
+  2500/4953
+  3000/4953
+  3500/4953
+  4000/4953
+  4500/4953
+>> ok=4953 sem_cif=0 desalinhado=0
+>> SS coil=38.96% helice=36.76% folha=24.28%
