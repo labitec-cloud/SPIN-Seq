@@ -26,6 +26,11 @@ env/
 # torna qualquer número incomparável com os já medidos.
 !/data/manifest.csv
 
+# EXCEÇÃO: as listas de split em texto puro, derivadas do manifesto. São a prova
+# do protocolo anti-vazamento que um revisor confere sem abrir um CSV de 165 KB.
+!/data/splits/
+!/data/splits/*.txt
+
 # Saídas — /outputs/* pelo mesmo motivo de /data/*. As subpastas (que guardam os
 # .pt) seguem excluídas; só os arquivos soltos no topo são reincluídos abaixo.
 /outputs/*
