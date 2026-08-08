@@ -9,7 +9,7 @@ interact?"**. It returns a residue graph with **typed** edges (hydrogen bond, hy
 
 ![SPIN-Seq pipeline](figures/fig1_pipeline.png)
 
-> 📄 **Reviewing the BSB 2026 paper?** Start at **[REVIEWERS.md](REVIEWERS.md)** — it maps every
+> 📄 **Reviewing the manuscript?** Start at **[REVIEWERS.md](REVIEWERS.md)** — it maps every
 > number in the paper to the file in this repository that produced it.
 
 ---
@@ -377,7 +377,7 @@ intermediates batch by batch, doubling the dataset costs ~2.6 GB, not ~29 GB.
 ## Repository layout
 
 ```
-REVIEWERS.md        📄 every number in the BSB 2026 paper mapped to its source file
+REVIEWERS.md        📄 every number in the manuscript mapped to its source file
 figures/            pipeline figure (TikZ source + PNG)
 configs/            experiment YAMLs (esm650m_aa.yaml = champion recipe)
 scripts/

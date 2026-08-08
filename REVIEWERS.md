@@ -1,7 +1,10 @@
 # For reviewers — where every number in the paper comes from
 
-This file maps each claim in **“SPIN-Seq: predicting the typed residue interaction network from
-sequence”** (BSB 2026, short paper) to the file in this repository that produced it.
+This file maps each claim in the manuscript **“SPIN-Seq: predicting the typed residue interaction
+network from sequence”** to the file in this repository that produced it.
+
+⚠️ **The manuscript is a preprint under submission to BSB 2026. It has not been peer-reviewed,
+accepted or published.**
 
 Nothing here is a summary written after the fact: `outputs/` holds the **raw stdout** of the runs.
 Model weights (`.pt`, ~265 MB) are not versioned; every number that does not require them is.
@@ -20,7 +23,7 @@ Model weights (`.pt`, ~265 MB) are not versioned; every number that does not req
 *Above the barrier, the input path, entirely derivable from the sequence. Below it, the
 supervision. `pdbe-arpeggio` reads the 3D structure, but its labels reach the model only through
 the training loss; at inference the lower half is absent. Source: `figures/fig1_pipeline.tex`
-(TikZ, as published in the paper).*
+(TikZ, as it appears in the manuscript).*
 
 ---
 
