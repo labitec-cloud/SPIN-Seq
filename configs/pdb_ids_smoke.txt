@@ -1,0 +1,7 @@
+# Conjunto pequeno de proteínas monoméricas para validar o pipeline (Fase 1).
+# Um PDB ID por linha. Escolhidas por serem pequenas, bem resolvidas e clássicas.
+1ubq   # ubiquitina
+1crn   # crambina
+3gb1   # domínio B1 da proteína G
+1enh   # engrailed homeodomain
+5pti   # inibidor de tripsina pancreática (BPTI)

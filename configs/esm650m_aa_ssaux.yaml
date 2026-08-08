@@ -1,0 +1,128 @@
+# Configuração padrão do SPIN-Seq.
+# Ajustada para GPU com POUCA VRAM (ex.: GTX 1650, 4 GB).
+
+seed: 42
+
+paths:
+  raw: data/raw
+  arpeggio: data/arpeggio
+  labels: data/labels
+  embeddings: data/embeddings_650m
+  ss: data/ss   # cache separado (não sobrescreve o 150M)
+
+esm:
+  # 650M mede 3.58 GB reserved em L=350 (fp16 + contatos) -> cabe na GTX 1650 (4 GB).
+  model: esm2_t33_650M_UR50D
+  repr_layer: 33               # ultima camada do 650M (dim 1280)
+  device: cuda                 # 'cpu' se faltar VRAM
+  fp16: true                   # meia precisão para caber em 4 GB
+  batch_tokens: 1024           # baixo por causa da VRAM
+  max_len: 1022                # limite prático de contexto do ESM-2
+
+dataset:
+  cluster_url: "https://cdn.rcsb.org/resources/sequence/clusters/clusters-by-entity-30.txt"
+  cluster_file: data/clusters-by-entity-30.txt
+  manifest: data/manifest.csv
+  target: 300              # nº de cadeias não-redundantes a montar
+  min_len: 30
+  max_len: 350             # compromisso rendimento x candidatos
+  max_resolution: 2.5      # Å (só raio-X; NMR descartado)
+  max_total_atoms: 8000    # descarta assemblies grandes (Arpeggio processa tudo)
+  max_cif_mb: 3.0          # não baixa mmCIF maior que isso
+  arpeggio_timeout: 60      # s; pula estruturas patologicamente lentas
+  split: [0.8, 0.1, 0.1]   # train / val / test (por estrutura = por cluster)
+
+train:
+  neg_ratio: 5            # negativos amostrados por positivo
+  hidden: 512
+  layers: 2
+  dropout: 0.2
+  lr: 0.001
+  weight_decay: 0.0001
+  epochs: 30
+  batch_chains: 8         # cadeias por mini-batch (dataset lazy)
+  num_workers: 2          # workers do DataLoader (features on-the-fly)
+  batch_pairs: 4096       # (legado) não usado pelo dataset lazy
+  val_frac: 0.2           # (legado) split vem do manifest.csv
+  lambda_contact: 1.0
+  lambda_types: 1.0
+  lambda_dist: 0.5
+  use_esm_contact_feat: true   # inclui score de contato do ESM-2 na feature de par
+
+# Cabeça 2D convolucional (Fase 4) — treino por crops w×w (train_conv2d.py).
+conv2d:
+  crop_size: 64            # janela w×w por amostra (VRAM: w² pares/passo)
+  crops_per_chain: 4       # nº de crops amostrados por cadeia por época
+  pos_center_prob: 0.7     # prob. de centrar o crop num par positivo (evita crops vazios)
+  rare_center_prob: 0.5    # dentre os centrados, prob. de mirar um positivo de classe rara
+  rare_types: [ionic, aromatic, carbonyl, hbond]  # classes sub-representadas (§9.3)
+  proj_dim: 32             # projeção 640→d antes do outer (botão principal de VRAM)
+  channels: 64             # canais da ResNet 2D
+  n_blocks: 12             # blocos residuais dilatados
+  dilations: [1, 2, 4, 8]  # dilatação cíclica pelos blocos
+  dropout: 0.15
+  lr: 0.001
+  weight_decay: 0.0001
+  epochs: 30
+  batch_crops: 8           # crops por mini-batch
+  num_workers: 1
+  focal_gamma: 2.0         # (ignorado quando `asl` está presente)
+  focal_alpha: 0.25        # (ignorado quando `asl` está presente)
+  class_balanced: true     # peso por classe (inverso-√ freq) no focal — reequilibra as raras
+  class_weight_cap: 8.0    # §9.8 passo 1: teto do peso (3->8) p/ raras que batiam no teto
+  # §9.8 passo 2: ASL substitui o focal nos canais de tipo. UNICA variavel vs o passo 1.
+  asl:
+    gamma_pos: 0.0         # nao desconta positivos (o focal descontava via alpha=0.25)
+    gamma_neg: 4.0         # desconta so os negativos faceis
+    clip: 0.05             # probability shifting: negativo com p < clip sai do gradiente
+  cosine: true             # LR cosine annealing ao longo das épocas
+  early_stop_patience: 8   # para se o macro de val não melhorar por N épocas (0 = desliga)
+  aa_dim: 8               # §9.8 passo 3: embedding de AA por par (contorna a proj 1280->32)
+  use_ss: true            # §1.2 LIMPO: SS so como ALVO (head auxiliar)
+  ss_pair: false          # canal de par DESLIGADO: usaria SS como ENTRADA (exige estrutura 3D)
+  lambda_ss: 0.3          # peso da perda auxiliar de SS
+  lambda_contact: 1.0
+  lambda_types: 1.0
+  lambda_dist: 0.1         # dist em MSE (dist-bins regrediu no portao, §8.6 — abandonado)
+
+arpeggio:
+  # |i-j| < seq_sep_min é descartado (vizinhos triviais).
+  seq_sep_min: 3
+  # Só consideramos interações intra-cadeia entre resíduos de proteína.
+  interacting_entities: INTRA_SELECTION
+  drop_water: true
+
+  # Vocabulário T (classes-alvo do modelo). Ordem = índice do canal.
+  interaction_types:
+    - hbond          # ligação de hidrogênio (forte + fraca)
+    - polar          # contato polar (não atende geometria de hbond)
+    - ionic          # iônica / ponte salina
+    - aromatic       # pi-pi
+    - hydrophobic    # hidrofóbica
+    - carbonyl       # carbonila
+    - vdw            # van der Waals (incl. vdw_clash)
+    - xbond          # halogênio
+    - metal          # coordenação de metal
+    - covalent       # covalente / dissulfeto
+    - proximal       # fallback: proximidade sem tipo específico
+
+  # Mapa tipos-brutos do Arpeggio -> classe do vocabulário acima.
+  # Tipos brutos vistos: proximal, polar, weak_polar, hydrophobic, vdw_clash,
+  # weak_hbond, hbond, vdw, carbonyl, ionic, aromatic, xbond, metal_complex,
+  # clash, covalent. (revisar com estatísticas do dataset completo)
+  type_map:
+    hbond: hbond
+    weak_hbond: hbond
+    polar: polar
+    weak_polar: polar
+    ionic: ionic
+    aromatic: aromatic
+    hydrophobic: hydrophobic
+    carbonyl: carbonyl
+    vdw: vdw
+    vdw_clash: vdw
+    clash: vdw
+    xbond: xbond
+    metal_complex: metal
+    covalent: covalent
+    proximal: proximal
