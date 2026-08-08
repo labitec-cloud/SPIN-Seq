@@ -1,12 +1,12 @@
-"""Avaliação DENSA no split test — protocolo justo para comparar MLP vs Conv2D.
+"""DENSE evaluation on the test split - a fair protocol for comparing MLP vs Conv2D.
 
-Ambos os modelos são pontuados sobre EXATAMENTE o mesmo conjunto de pares: TODOS os pares
-válidos (i<j, |i-j| >= seq_sep_min) de cada cadeia do test, SEM amostragem de negativos. É o
-único protocolo em que 0.481 (MLP, negativos amostrados) e 0.379 (conv2d, pixels densos) viram
-comparáveis. Reporta AUPRC por classe/contato + Top-L por classe e por faixa de separação.
+Both models are scored on EXACTLY the same set of pairs: ALL valid pairs
+(i<j, |i-j| >= seq_sep_min) of every test chain, with NO negative sampling. It is the only
+protocol under which 0.481 (MLP, sampled negatives) and 0.379 (conv2d, dense pixels) become
+comparable. Reports per-class/contact AUPRC + Top-L per class and per separation range.
 
-O modelo é dimensionado pelos tipos SALVOS no checkpoint; as colunas são alinhadas ao
-vocabulário atual POR NOME (permite avaliar ckpt de vocabulário antigo).
+The model is sized by the types SAVED in the checkpoint; the columns are aligned to the
+current vocabulary BY NAME (which allows evaluating a checkpoint with an older vocabulary).
 
 Uso:
     python src/eval_dense.py --model mlp    --ckpt outputs/baseline/best.pt
@@ -32,8 +32,8 @@ from src.models.pair_mlp import PairMLP
 
 
 def load_chain(ef, lf, seq_sep, ss_dir="data/ss", keep_emb=True):
-    """keep_emb=False descarta o embedding APÓS a checagem de comprimento: rankers que não
-    usam ESM (propensão, oráculo) avaliam as mesmas 494 cadeias sem os ~900 MB de emb."""
+    """keep_emb=False drops the embedding AFTER the length check: rankers that do not use ESM
+    (propensity, oracle) evaluate the same 494 chains without the ~900 MB of embeddings."""
     e = np.load(ef, allow_pickle=True)
     l = np.load(lf, allow_pickle=True)
     emb = e["emb"].astype(np.float32)
@@ -59,7 +59,7 @@ def load_chain(ef, lf, seq_sep, ss_dir="data/ss", keep_emb=True):
     sf = os.path.join(ss_dir, f"{name}.npz")
     ss = (np.load(sf)["ss"].astype(np.int64)[:L] if os.path.exists(sf)
           else np.full(L, 3, np.int64))
-    vi, vj = np.triu_indices(L, k=seq_sep)  # todos os pares válidos i<j, j-i>=seq_sep
+    vi, vj = np.triu_indices(L, k=seq_sep)  # all valid pairs i<j, j-i>=seq_sep
     return dict(emb=emb, contacts=contacts, L=L, names=names, aa=aa, ss=ss,
                 vi=vi, vj=vj, tgt_c=tgt_c, tgt_t=tgt_t)
 
@@ -154,8 +154,8 @@ def main():
     model.eval()
 
     T = len(names)
-    gc_p, gc_t = [], []                       # contato global (para AUPRC)
-    gt_p = [[] for _ in range(T)]             # tipos global por classe
+    gc_p, gc_t = [], []                       # global contact (for AUPRC)
+    gt_p = [[] for _ in range(T)]             # global types per class
     gt_t = [[] for _ in range(T)]
     acc_c = TopLAccumulator()
     acc_t = [TopLAccumulator() for _ in range(T)]
@@ -183,7 +183,7 @@ def main():
                    if yt.sum() > 0 else float("nan"))
     macro = float(np.nanmean(list(ap_t.values())))
 
-    print(f"\n== AVALIAÇÃO DENSA ({args.split}, {args.model}) — todos os pares válidos ==")
+    print(f"\n== DENSE EVALUATION ({args.split}, {args.model}) - all valid pairs ==")
     print(f"AUPRC_contact     = {ap_c:.3f}")
     print(f"AUPRC_types_macro = {macro:.3f}")
     print(f"{'classe':12s} {'AUPRC':>6s}  " + "  ".join(f"L/{d}" if d > 1 else "L"
@@ -196,14 +196,14 @@ def main():
         print(f"{n:12s} {ap_t[n]:6.3f}  " +
               "  ".join(f"{tl[f'long/L{d}' if d > 1 else 'long/L']:.3f}" for d in DIVISORS))
 
-    print("\n== Top-L por faixa de separação (contato) ==")
+    print("\n== Top-L per separation range (contact) ==")
     print(f"{'faixa':8s} " + "  ".join(f"L/{d}" if d > 1 else "L" for d in DIVISORS))
     for rng in list(RANGES) + ["all"]:
         print(f"{rng:8s} " +
               "  ".join(f"{tl_c[f'{rng}/L{d}' if d > 1 else f'{rng}/L']:.3f}" for d in DIVISORS))
 
-    # §0.3: Top-L por CLASSE x faixa de separação (mostra que não é só contato local)
-    print("\n== Top-L (L) por classe x faixa de separação ==")
+    # Top-L per CLASS x separation range (shows the signal is not just local contact)
+    print("\n== Top-L (L) per class x separation range ==")
     print(f"{'classe':12s} " + "  ".join(f"{r:>7s}" for r in list(RANGES) + ["all"]))
     for k, n in enumerate(names):
         tl = acc_t[k].mean()

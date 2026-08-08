@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Bootstrap pareado SS-aux (b) vs passo 3 (a), uma vez por semente.
-# Delta positivo = SS-aux melhor. Reentrante: pula saída que já tenha o bloco de IC.
+# A positive delta means SS-aux is better. Re-entrant: skips output that already has the CI block.
 #
 #   bash scripts/run_boots.sh
 set -u
@@ -13,7 +13,7 @@ SS=configs/esm650m_aa_ssaux.yaml
 boot() {  # boot <ckpt_a> <ckpt_b> <saida>
     local a="$1" b="$2" out="$3"
     if [[ -f "$out" ]] && grep -qi 'IC95' "$out"; then
-        echo ">>> PULANDO $out (já existe)"
+        echo ">>> SKIPPING $out (already exists)"
         return 0
     fi
     echo ">>> $(date +%H:%M) bootstrap -> $out"

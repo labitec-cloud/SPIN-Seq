@@ -1,15 +1,15 @@
-"""Converte a saída JSON do pdbe-arpeggio em rótulos resíduo-resíduo (RIN tipado).
+"""Converts the pdbe-arpeggio JSON output into residue-residue labels (a typed RIN).
 
 Pipeline (Fase 1 do PLANO):
-  1. lê a estrutura (mmCIF) com gemmi -> índice sequencial de resíduos por cadeia;
-  2. lê o JSON do Arpeggio -> contatos atômicos tipados;
-  3. filtra água e mantém apenas interações intra-cadeia entre resíduos de proteína;
-  4. mapeia tipos brutos -> vocabulário T (config);
-  5. agrega contatos atômicos por par de resíduos (OR dos tipos, distância mínima);
+  1. read the structure (mmCIF) with gemmi -> sequential residue index per chain;
+  2. read the Arpeggio JSON -> typed atomic contacts;
+  3. filter out water and keep only intra-chain interactions between protein residues;
+  4. map raw types -> vocabulary T (config);
+  5. aggregate atomic contacts per residue pair (OR of the types, minimum distance);
   6. aplica filtro |i-j| >= seq_sep_min;
-  7. retorna rótulos esparsos L×L×T + metadados.
+  7. return sparse L x L x T labels + metadata.
 
-Uso programático:
+Programmatic use:
     from src.supervision.arpeggio_labels import build_labels
     result = build_labels("data/raw/1ubq.cif", "data/arpeggio/1ubq/1ubq.json", cfg)
 """
@@ -22,13 +22,13 @@ import gemmi
 import numpy as np
 
 
-# Chave única de um resíduo dentro da estrutura.
+# Unique key of a residue within the structure.
 ResKey = tuple[str, int, str]  # (auth_asym_id, auth_seq_id, ins_code)
 
 
 @dataclass
 class ChainIndex:
-    """Mapa (chain, seq_id, icode) -> índice 0..L-1 e sequência de uma cadeia."""
+    """Map (chain, seq_id, icode) -> index 0..L-1 and sequence of a chain."""
 
     chain: str
     seq: str
@@ -41,7 +41,7 @@ class ChainIndex:
 
 
 def index_chains(cif_path: str) -> dict[str, ChainIndex]:
-    """Indexa os resíduos do polímero de cada cadeia proteica do primeiro modelo."""
+    """Indexes the polymer residues of every protein chain of the first model."""
     st = gemmi.read_structure(cif_path)
     st.setup_entities()
     model = st[0]
@@ -50,7 +50,7 @@ def index_chains(cif_path: str) -> dict[str, ChainIndex]:
         poly = chain.get_polymer()
         if len(poly) == 0:
             continue
-        # só cadeias de proteína (peptídeo)
+        # protein (peptide) chains only
         ptype = poly.check_polymer_type()
         if ptype not in (gemmi.PolymerType.PeptideL, gemmi.PolymerType.PeptideD):
             continue
@@ -81,8 +81,8 @@ class LabelResult:
     types: list[str]
     idx_i: np.ndarray          # (n_pos,) int32
     idx_j: np.ndarray          # (n_pos,) int32  (i < j)
-    labels: np.ndarray         # (n_pos, T) uint8 multi-rótulo
-    min_dist: np.ndarray       # (n_pos,) float32 distância mínima do par
+    labels: np.ndarray         # (n_pos, T) uint8 multi-label
+    min_dist: np.ndarray       # (n_pos,) float32 minimum distance of the pair
     reskeys: list[ResKey]
 
     def stats(self) -> dict[str, int]:
@@ -96,7 +96,7 @@ def build_labels(
     cfg: dict,
     chain: str | None = None,
 ) -> dict[str, LabelResult]:
-    """Constrói rótulos por cadeia. Se `chain` for None, processa todas as cadeias.
+    """Builds labels per chain. If `chain` is None, processes every chain.
 
     Retorna {chain_name: LabelResult}.
     """
@@ -120,7 +120,7 @@ def build_labels(
     if chain is not None:
         chains = {chain: chains[chain]}
 
-    # Acumuladores por cadeia: (i,j)->set de canais e distância mínima.
+    # Per-chain accumulators: (i,j)->set of channels and minimum distance.
     per_chain_edges: dict[str, dict[tuple[int, int], np.ndarray]] = {
         c: {} for c in chains
     }
@@ -140,7 +140,7 @@ def build_labels(
         if cidx is None:
             continue
         if bgn not in cidx.key_to_idx or end not in cidx.key_to_idx:
-            continue  # átomo de água/ligante/hetero fora do polímero
+            continue  # water/ligand/hetero atom outside the polymer
 
         i = cidx.key_to_idx[bgn]
         j = cidx.key_to_idx[end]

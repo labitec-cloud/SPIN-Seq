@@ -1,12 +1,12 @@
-"""Perdas da cabeça 2D (Fase 4).
+"""Losses of the 2D head.
 
-Tudo opera sobre mapas `w×w` e agrega SÓ nos pixels válidos:
-- `lm` (loss mask): 1 onde o par é válido (não-preenchido e |i-j| >= seq_sep);
-- `dm` (dist mask): 1 só onde há contato (a distância só existe para pares em contato).
+Everything operates on `w x w` maps and aggregates ONLY over valid pixels:
+- `lm` (loss mask): 1 where the pair is valid (not padding and |i-j| >= seq_sep);
+- `dm` (dist mask): 1 only where there is contact (distance exists only for contacting pairs).
 
 `focal_bce` substitui o `pos_weight` do baseline: o fator `(1-p_t)^gamma` foca nos positivos
-difíceis das classes raras, e `alpha` reequilibra positivo/negativo — melhor para o
-desbalanceamento severo por classe.
+hard examples of the rare classes, and `alpha` rebalances positive/negative - better suited
+to severe per-class imbalance.
 """
 from __future__ import annotations
 
@@ -19,44 +19,44 @@ def _masked_mean(x: torch.Tensor, mask: torch.Tensor, eps: float = 1e-6):
 
 
 def masked_bce(logits, targets, mask):
-    """BCE de contato, média sobre os pixels válidos (mask: B×H×W)."""
+    """Contact BCE, averaged over the valid pixels (mask: B x H x W)."""
     ce = F.binary_cross_entropy_with_logits(logits, targets, reduction="none")
     return _masked_mean(ce, mask)
 
 
 def focal_bce(logits, targets, mask, gamma: float = 2.0, alpha: float = 0.25,
               class_weight=None):
-    """Focal loss multi-rótulo. logits/targets: B×T×H×W; mask: B×H×W (broadcast em T).
+    """Multi-label focal loss. logits/targets: B x T x H x W; mask: B x H x W (broadcast over T).
 
-    class_weight (T,): peso por classe (reequilibra as raras sufocadas no regime denso)."""
+    class_weight (T,): per-class weight (rebalances rare classes smothered in the dense regime)."""
     p = torch.sigmoid(logits)
     ce = F.binary_cross_entropy_with_logits(logits, targets, reduction="none")
     p_t = p * targets + (1 - p) * (1 - targets)
     focal = (1 - p_t).pow(gamma)
     alpha_t = alpha * targets + (1 - alpha) * (1 - targets)
-    loss = alpha_t * focal * ce                      # B×T×H×W
+    loss = alpha_t * focal * ce                      # B x T x H x W
     if class_weight is not None:
         loss = loss * class_weight.view(1, -1, 1, 1)
-    m = mask.unsqueeze(1)                            # B×1×H×W
+    m = mask.unsqueeze(1)                            # B x 1 x H x W
     return (loss * m).sum() / (m.sum() * targets.shape[1] + 1e-6)
 
 
 def asymmetric_loss(logits, targets, mask, gamma_pos: float = 0.0, gamma_neg: float = 4.0,
                     clip: float = 0.05, class_weight=None, eps: float = 1e-8):
-    """Asymmetric Loss (Ben-Baruch 2021) multi-rótulo. Mesmas formas do `focal_bce`.
+    """Multi-label Asymmetric Loss (Ben-Baruch 2021). Same shapes as `focal_bce`.
 
-    Corrige o defeito do focal para cauda longa: lá o `alpha`(=0.25) REDUZ o peso do positivo,
-    que é o oposto do necessário quando o positivo já é raríssimo. Aqui os focos são
-    DESACOPLADOS — `gamma_pos`=0 não desconta os positivos, `gamma_neg`>0 desconta só os
-    negativos fáceis — e o `clip` (probability shifting) descarta de vez os negativos com
-    p < clip, que dominam o regime denso e vinham consumindo o gradiente das raras.
-    Agregação idêntica à do `focal_bce` para manter a comparação isolada.
+    Fixes the focal loss's long-tail defect: there `alpha`(=0.25) REDUCES the weight of the
+    positive, the opposite of what is needed when the positive is already extremely rare. Here
+    the focusing terms are DECOUPLED - `gamma_pos`=0 does not discount positives, `gamma_neg`>0
+    discounts only the easy negatives - and `clip` (probability shifting) discards outright the
+    negatives with p < clip, which dominate the dense regime and were consuming the gradient of
+    the rare classes. Aggregation identical to `focal_bce`, to keep the comparison isolated.
     """
     p = torch.sigmoid(logits)
     p_neg = (p - clip).clamp(min=0) if clip > 0 else p
     l_pos = targets * (1 - p).pow(gamma_pos) * torch.log(p.clamp(min=eps))
     l_neg = (1 - targets) * p_neg.pow(gamma_neg) * torch.log((1 - p_neg).clamp(min=eps))
-    loss = -(l_pos + l_neg)                          # B×T×H×W
+    loss = -(l_pos + l_neg)                          # B x T x H x W
     if class_weight is not None:
         loss = loss * class_weight.view(1, -1, 1, 1)
     m = mask.unsqueeze(1)
@@ -64,27 +64,27 @@ def asymmetric_loss(logits, targets, mask, gamma_pos: float = 0.0, gamma_neg: fl
 
 
 def masked_mse(pred, targets, dmask):
-    """MSE de distância só onde há contato (dmask: B×H×W)."""
+    """Distance MSE only where there is contact (dmask: B x H x W)."""
     se = (pred - targets) ** 2
     return _masked_mean(se, dmask)
 
 
 def masked_dist_ce(logits, targets, dmask, edges):
-    """CE de distância em BINS (estilo trRosetta), só onde há contato (dmask: B×H×W).
+    """Distance CE over BINS (trRosetta style), only where there is contact (dmask: B x H x W).
 
-    logits: B×n_bins×H×W; targets: B×H×W (distância em Å); edges: fronteiras internas
-    (n_bins-1,) para `bucketize` → índice do bin em [0, n_bins-1]."""
-    bins = torch.bucketize(targets, edges)            # B×H×W em [0, n_bins-1]
-    ce = F.cross_entropy(logits, bins, reduction="none")  # B×H×W
+    logits: B x n_bins x H x W; targets: B x H x W (distance in A); edges: internal boundaries
+    (n_bins-1,) for `bucketize` -> bin index in [0, n_bins-1]."""
+    bins = torch.bucketize(targets, edges)            # B x H x W em [0, n_bins-1]
+    ce = F.cross_entropy(logits, bins, reduction="none")  # B x H x W
     return _masked_mean(ce, dmask)
 
 
 def multitask_loss(out, batch, lambdas, gamma: float = 2.0, alpha: float = 0.25,
                    class_weight=None, dist_edges=None, asl=None):
-    """out = (logit_contact, logit_types, logit_dist); batch = saída do ChainCropDataset.
+    """out = (logit_contact, logit_types, logit_dist); batch = output of ChainCropDataset.
 
-    Se `dist_edges` for dado, a distância é aprendida como classificação em bins
-    (trRosetta); senão, cai no MSE legado (head de 1 canal). Se `asl` (dict) for dado, os
+    If `dist_edges` is given, distance is learned as bin classification (trRosetta);
+    otherwise it falls back to the legacy MSE (1-channel head). If `asl` (dict) is given, the
     canais de tipo usam Asymmetric Loss no lugar do focal. Devolve (loss, parcelas).
     """
     lc, lt, ld = out

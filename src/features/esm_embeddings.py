@@ -1,13 +1,13 @@
-"""Fase 2 — extração e cache de features do ESM-2 (modelo CONGELADO).
+"""Extraction and caching of ESM-2 features (the model is FROZEN).
 
-O ESM-2 é usado apenas como extrator: não há treino/fine-tuning aqui. Para cada
-sequência geramos e cacheamos em disco:
-  - `emb`       : embeddings por resíduo (L, d) da camada escolhida;
-  - `attn`      : (opcional) mapa de atenção simétrico por par (L, L, heads*layers)
-                  — sinal 2D útil para a cabeça de contato/tipos;
-  - `contacts`  : (opcional) mapa de contatos previsto pelo próprio ESM-2 (L, L).
+ESM-2 is used only as an extractor: there is no training/fine-tuning here. For each
+sequence we generate and cache on disk:
+  - `emb`       : per-residue embeddings (L, d) from the chosen layer;
+  - `attn`      : (optional) symmetric per-pair attention map (L, L, heads*layers)
+                  - a 2D signal useful for the contact/type head;
+  - `contacts`  : (optional) contact map predicted by ESM-2 itself (L, L).
 
-O cache evita reprocessar o pLM (gargalo) a cada época de treino.
+The cache avoids reprocessing the pLM (the bottleneck) on every training epoch.
 
 Uso:
     from src.features.esm_embeddings import ESMExtractor
@@ -45,7 +45,7 @@ class ESMExtractor:
             p.requires_grad_(False)
         self.alphabet = alphabet
         self.batch_converter = alphabet.get_batch_converter()
-        # camada de representação: default = última
+        # representation layer: default = last
         self.repr_layer: int = int(ecfg.get("repr_layer", self.model.num_layers))
 
     @torch.no_grad()
@@ -70,7 +70,7 @@ class ESMExtractor:
         )
 
         L = len(seq)
-        # remove tokens BOS/EOS (posições 0 e L+1)
+        # drop the BOS/EOS tokens (positions 0 and L+1)
         emb = out["representations"][self.repr_layer][0, 1 : L + 1].float().cpu().numpy()
         result: dict[str, np.ndarray] = {"emb": emb.astype(np.float32), "seq": np.array(seq)}
 

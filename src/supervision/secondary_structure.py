@@ -1,9 +1,9 @@
-"""Estrutura secundária (SS) 3-estados por resíduo, alinhada aos rótulos/embeddings.
+"""Three-state per-residue secondary structure (SS), aligned to the labels/embeddings.
 
-§1.2 do plano de execução. Reusa `index_chains` (mesma ordem de polímero que os
-rótulos e o embedding) para garantir alinhamento resíduo-a-resíduo. A SS é
-computada com pydssp (DSSP em python puro) a partir do backbone N/CA/C/O; sem
-mkdssp/sudo. Saída: índice int8 por resíduo — 0=coil(-), 1=hélice(H), 2=folha(E).
+Reuses `index_chains` (the same polymer order as the labels and the embedding) to
+guarantee residue-by-residue alignment. SS is computed with pydssp (DSSP in pure
+Python) from the N/CA/C/O backbone; no mkdssp, no sudo. Output: one int8 index per
+residue - 0=coil(-), 1=helix(H), 2=strand(E).
 
 Uso:
     python src/supervision/secondary_structure.py --config configs/esm650m_aa.yaml
@@ -26,7 +26,7 @@ BACKBONE = ("N", "CA", "C", "O")
 
 
 def ss_for_chain(cif_path: str, chain: str) -> np.ndarray | None:
-    """SS 3-estados (int8, len=L) da cadeia, na ordem do polímero (= ordem dos rótulos)."""
+    """Three-state SS (int8, len=L) of the chain, in polymer order (= label order)."""
     idx = index_chains(cif_path)
     if chain not in idx:
         return None
@@ -44,14 +44,14 @@ def ss_for_chain(cif_path: str, chain: str) -> np.ndarray | None:
             at = res.find_atom(name, "*")
             if at is not None:
                 coord[k, a] = [at.pos.x, at.pos.y, at.pos.z]
-    ok = ~np.isnan(coord).any(axis=(1, 2))  # resíduos com backbone completo
+    ok = ~np.isnan(coord).any(axis=(1, 2))  # residues with a complete backbone
     ss = np.zeros(L, np.int8)  # default coil
     if ok.sum() >= 4:
         filled = coord.copy()
         filled[~ok] = 0.0  # pydssp exige geometria finita; corrigido depois
         c3 = pydssp.assign(filled, out_type="c3")
         ss = np.array([SS3.get(str(s), 0) for s in c3], np.int8)
-        ss[~ok] = 0  # resíduos sem backbone completo → coil (não confiar)
+        ss[~ok] = 0  # residues without a complete backbone -> coil (do not trust)
     return ss
 
 

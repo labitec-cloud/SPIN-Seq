@@ -1,8 +1,8 @@
-"""Testes de sanidade da construção de rótulos (Fase 1).
+"""Sanity tests for label construction.
 
-Executar (com o venv ativo, a partir da raiz do repo):
+Run (with the venv active, from the repo root):
     python -m pytest src/supervision/test_arpeggio_labels.py -q
-ou, sem pytest:
+or, without pytest:
     python src/supervision/test_arpeggio_labels.py
 """
 from __future__ import annotations
@@ -33,7 +33,7 @@ CFG = {
 
 
 def _index_stub(monkey_seq_len: int = 10):
-    """Monta um ChainIndex sintético de uma cadeia 'A' com resíduos 1..N."""
+    """Builds a synthetic ChainIndex of a chain 'A' with residues 1..N."""
     from src.supervision.arpeggio_labels import ChainIndex
 
     reskeys = [("A", n, "") for n in range(1, monkey_seq_len + 1)]
@@ -82,7 +82,7 @@ def test_aggregation_and_filters(monkeypatch):
     pairs = set(zip(res.idx_i.tolist(), res.idx_j.tolist()))
     assert pairs == {(0, 4), (3, 7)}
 
-    # par (0,4): hbond, vdw, proximal ligados; distância mínima 2.8
+    # pair (0,4): hbond, vdw, proximal on; minimum distance 2.8
     k = list(zip(res.idx_i, res.idx_j)).index((0, 4))
     lab = res.labels[k]
     assert lab[types.index("hbond")] == 1
@@ -97,7 +97,7 @@ def test_aggregation_and_filters(monkeypatch):
 
 
 if __name__ == "__main__":
-    # runner mínimo sem pytest
+    # minimal runner without pytest
     class _MP:
         def setattr(self, obj, name, val):
             setattr(obj, name, val)

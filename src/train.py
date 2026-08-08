@@ -77,7 +77,7 @@ def main():
 
     train_f = files_from_manifest(cfg, "train")
     val_f = files_from_manifest(cfg, "val")
-    print(f">> cadeias (split por cluster do manifest): treino={len(train_f)} val={len(val_f)}")
+    print(f">> chains (cluster split from the manifest): train={len(train_f)} val={len(val_f)}")
 
     tr = ChainPairDataset(cfg, train_f, rng)
     va = ChainPairDataset(cfg, val_f, rng)

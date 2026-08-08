@@ -1,15 +1,15 @@
-"""Intervalos de confiança por bootstrap sobre as cadeias do test (§0.1).
+"""Bootstrap confidence intervals over the test chains.
 
-Gera as predições do modelo UMA vez (mesmo protocolo do portão denso), guarda
-por cadeia, e reamostra as cadeias COM reposição B vezes recomputando AUPRC de
-contato e por classe + macro sobre os pares agregados de cada reamostra.
-Reporta média e IC 95% (percentis 2.5/97.5). Sem isso, deltas pequenos entre
-modelos são indefensáveis num referee report.
+Generates the model predictions ONCE (same protocol as the dense gate), stores them
+per chain, and resamples the chains WITH replacement B times, recomputing contact and
+per-class AUPRC + macro over the pooled pairs of each resample. Reports the mean and a
+95% CI (percentiles 2.5/97.5). Without this, small deltas between models are
+indefensible in a referee report.
 
-Com --ckpt-b entra no modo PAREADO: reamostra as MESMAS cadeias para os dois modelos e
-reporta o IC do DELTA (b - a). É o teste correto para ablação — a variância entre proteínas
-(uma cadeia difícil é difícil para ambos) cancela, o que ICs separados não fazem. ICs
-sobrepostos NÃO implicam delta não-significativo.
+With --ckpt-b it enters PAIRED mode: it resamples the SAME chains for both models and
+reports the CI of the DELTA (b - a). This is the correct test for ablation - the variance
+between proteins (a hard chain is hard for both) cancels out, which separate CIs do not
+achieve. Overlapping CIs do NOT imply a non-significant delta.
 
 Uso:
     python src/bootstrap_ci.py --config configs/esm650m_aa.yaml \
@@ -19,7 +19,7 @@ Uso:
         --ckpt outputs/conv2d_650m_aa/best.pt \
         --config-b configs/esm650m_aa_ssaux.yaml --ckpt-b outputs/conv2d_ssaux/best.pt
 
-    # delta pareado contra a baseline de propensão de par de AA
+    # paired delta against the AA-pair propensity baseline
     python src/bootstrap_ci.py --config configs/esm650m_aa.yaml \
         --model propensity --ckpt outputs/propensity_table.npz \
         --model-b conv2d    --ckpt-b outputs/conv2d_650m_aa/best.pt
@@ -46,20 +46,20 @@ def ap(y, p):
     return float(average_precision_score(y, p)) if y.sum() > 0 else float("nan")
 
 
-# Ordem decrescente dos 65.536 valores representáveis em float16, precomputada uma vez.
-# Não-finitos vão para o fim (e são barrados por assert em ap_hist).
+# Descending order of the 65,536 representable float16 values, precomputed once.
+# Non-finite values go to the end (and are barred by an assert in ap_hist).
 _CODE_VALS = np.arange(65536, dtype=np.uint16).view(np.float16)
 _CODE_ORDER = np.argsort(np.where(np.isfinite(_CODE_VALS), _CODE_VALS,
                                   -np.inf))[::-1].copy()
 
 
 def ap_hist(y, p):
-    """AUPRC EXATA sem argsort: agrupa por valor float16 distinto via bincount.
+    """EXACT AUPRC without argsort: groups by distinct float16 value via bincount.
 
-    A AUPRC só depende do agrupamento dos scores por valor distinto — é o que o
-    `distinct_value_indices` do sklearn faz depois de ordenar. Como os scores já estão
-    em float16 (~15 k valores possíveis), dá para pular o argsort de 5,18 M elementos e
-    contar direto: O(N) em vez de O(N log N), 16x mais rápido e bit-a-bit idêntico.
+    AUPRC depends only on grouping the scores by distinct value - which is what sklearn's
+    `distinct_value_indices` does after sorting. Since the scores are already float16
+    (~15k possible values), the argsort over 5.18M elements can be skipped and the counts
+    taken directly: O(N) instead of O(N log N), 16x faster and bit-for-bit identical.
     """
     if y.sum() == 0:
         return float("nan")
@@ -74,11 +74,11 @@ def ap_hist(y, p):
 
 
 def predict_all(kind, cfg, ckpt_path, chains, names, device, tag):
-    """Predições por cadeia de UM ranker. float16 nos scores (AUPRC é rank-based) e
-    uint8 nos alvos → ~4x menos RAM (máquina de 7.5 GB, OOM killer agressivo).
+    """Per-chain predictions of ONE ranker. float16 for scores (AUPRC is rank-based) and
+    uint8 for targets -> ~4x less RAM (7.5 GB machine, aggressive OOM killer).
 
-    kind='propensity' entra pela tabela de par de AA em vez de um checkpoint, o que
-    permite o delta PAREADO contra a baseline — dois ICs separados não serviriam."""
+    kind='propensity' comes in through the AA-pair table instead of a checkpoint, which
+    enables the PAIRED delta against the baseline - two separate CIs would not do."""
     if kind == "propensity":
         model, sel, use_esm = load_table(ckpt_path), None, None
         predict = predict_propensity
@@ -95,7 +95,7 @@ def predict_all(kind, cfg, ckpt_path, chains, names, device, tag):
         per.append((pc.astype(np.float16), ch["tgt_c"][vi, vj].astype(np.uint8),
                     pt.astype(np.float16), ch["tgt_t"][:, vi, vj].astype(np.uint8)))
         if (i + 1) % 100 == 0:
-            print(f"   [{tag}] predição {i+1}/{len(chains)}", flush=True)
+            print(f"   [{tag}] prediction {i+1}/{len(chains)}", flush=True)
     del model
     if device == "cuda" and kind != "propensity":
         torch.cuda.empty_cache()
@@ -103,8 +103,8 @@ def predict_all(kind, cfg, ckpt_path, chains, names, device, tag):
 
 
 def make_metrics(per, T, exact=False):
-    """exact=True usa o sklearn (referência); o default usa ap_hist, que dá o MESMO
-    número e permite as 1000 reamostras em minutos em vez de horas."""
+    """exact=True uses sklearn (the reference); the default uses ap_hist, which gives the
+    SAME number and makes the 1000 resamples take minutes instead of hours."""
     fn = ap if exact else ap_hist
 
     def metrics(idx):
@@ -158,7 +158,7 @@ def main():
     ap_.add_argument("--B", type=int, default=1000)
     ap_.add_argument("--seed", type=int, default=0)
     ap_.add_argument("--cache-dir", default="outputs/pred_cache",
-                     help="reusa predições já calculadas (o passo caro)")
+                     help="reuse already computed predictions (the expensive step)")
     ap_.add_argument("--no-cache", action="store_true")
     args = ap_.parse_args()
 
@@ -174,7 +174,7 @@ def main():
                 and "propensity" not in (args.model, args.model_b)):
             raise SystemExit("modo pareado exige o MESMO embedding nos dois modelos")
 
-    # embedding só é preciso se algum braço for um modelo neural
+    # the embedding is only needed if one arm is a neural model
     keep_emb = not all(k == "propensity"
                        for k in ([args.model] + ([args.model_b] if args.ckpt_b else [])))
 
@@ -196,12 +196,12 @@ def main():
         if not args.no_cache and os.path.exists(cp):
             per = load_cache(cp, len(chains))
             if per is not None:
-                print(f"   [{tag}] predições do cache: {cp}", flush=True)
+                print(f"   [{tag}] predictions from cache: {cp}", flush=True)
                 return per
         per = predict_all(kind, cfg_, ckpt, chains, names, device, tag)
         if not args.no_cache:
             save_cache(cp, per)
-            print(f"   [{tag}] predições salvas em {cp}", flush=True)
+            print(f"   [{tag}] predictions saved to {cp}", flush=True)
         return per
 
     per_a = get_preds(args.model, cfg, args.ckpt, "A")
@@ -210,7 +210,7 @@ def main():
     print(f">> A={args.ckpt}" + (f" B={args.ckpt_b}" if per_b else "") +
           f" cadeias={n} B={args.B}", flush=True)
 
-    chains.clear()  # os alvos densos (~1,9 GB) já foram destilados em per_a/per_b
+    chains.clear()  # the dense targets (~1.9 GB) are already distilled into per_a/per_b
 
     met_a = make_metrics(per_a, T)
     met_b = make_metrics(per_b, T) if per_b else None
@@ -218,8 +218,9 @@ def main():
     full = np.arange(n)
     rng = np.random.default_rng(args.seed)
 
-    # ap_hist é exata, mas isso é a diferença entre publicar e ter fé: confere contra o
-    # sklearn no ponto (1x) antes de gastar as B reamostras no caminho rápido.
+    # ap_hist is exact, but this is the difference between publishing and taking it on
+    # faith: check against sklearn at the point estimate (1x) before spending the B
+    # resamples on the fast path.
     d = np.nanmax(np.abs(np.array(met_a(full))
                          - np.array(make_metrics(per_a, T, exact=True)(full))))
     print(f">> ap_hist vs sklearn (estimativa pontual): max |Δ| = {d:.2e}", flush=True)
@@ -251,7 +252,7 @@ def main():
             print(f"   bootstrap pareado {b+1}/{args.B}", flush=True)
     lo = np.nanpercentile(boot, 2.5, axis=0)
     hi = np.nanpercentile(boot, 97.5, axis=0)
-    # p bicaudal: fração de reamostras que cruzam zero (mínimo 1/B, nunca 0)
+    # two-sided p: fraction of resamples crossing zero (minimum 1/B, never 0)
     pv = 2 * np.minimum((boot <= 0).mean(axis=0), (boot >= 0).mean(axis=0))
     pv = np.maximum(pv, 1.0 / args.B)
 
@@ -262,7 +263,7 @@ def main():
         sig = "*" if lo[j] > 0 or hi[j] < 0 else ""
         print(f"{c:12s} {pa[j]:7.3f} {pb[j]:7.3f} {pb[j] - pa[j]:+7.3f} "
               f"{lo[j]:9.3f} {hi[j]:10.3f} {pv[j]:7.3f} {sig:>4s}")
-    print("\n* = IC95 do delta não cruza zero.")
+    print("\n* = the 95% CI of the delta does not cross zero.")
 
 
 if __name__ == "__main__":

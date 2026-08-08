@@ -1,9 +1,9 @@
-"""Curva de aprendizado por classe — quanto cada tipo de interação melhora com MAIS dados.
+"""Per-class learning curve - how much each interaction type improves with MORE data.
 
-Treina o baseline em frações crescentes do split de treino (ex. 25/50/75/100%),
-avaliando SEMPRE na mesma validação. Serve para dois diagnósticos:
-  1) onde mais dados ainda paga (AUPRC subindo) vs. onde já saturou (ruído/modelo);
-  2) base de comparação para ajustar hiperparâmetros (rodar de novo com outra config
+Trains the baseline on increasing fractions of the training split (e.g. 25/50/75/100%),
+ALWAYS evaluating on the same validation set. It serves two diagnoses:
+  1) where more data still pays (AUPRC rising) vs. where it has saturated (noise/model);
+  2) a comparison baseline for tuning hyperparameters (rerun with another config
      e sobrepor as curvas).
 
 Saídas em outputs/learning_curve/:
@@ -91,7 +91,7 @@ def main():
 
     rows, type_names = [], None
     for f in fracs:
-        rng = np.random.default_rng(cfg["seed"])  # mesma semente → subconjuntos aninhados/estáveis
+        rng = np.random.default_rng(cfg["seed"])  # same seed -> nested/stable subsets
         idx = rng.permutation(len(all_train))
         k = max(1, int(round(f * len(all_train))))
         sub = [all_train[i] for i in idx[:k]]
@@ -127,7 +127,7 @@ def main():
             lw = 2.5 if key in ("contact", "types_macro") else 1.3
             plt.plot(xs, ys, style, marker="o", linewidth=lw, label=key)
         plt.xlabel("cadeias de treino")
-        plt.ylabel("AUPRC (validação)")
+        plt.ylabel("AUPRC (validation)")
         plt.title(f"Curva de aprendizado por classe ({args.epochs} ep/ponto)")
         plt.grid(alpha=0.3)
         plt.legend(fontsize=8, ncol=2)

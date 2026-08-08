@@ -1,15 +1,15 @@
-"""Regressão do split incremental do manifesto (anti-vazamento).
+"""Regression test for the manifest's incremental split (anti-leakage).
 
-`write_manifest` sorteava o split de TODAS as linhas a cada commit. Com a contagem fixa
-isso era inócuo, mas ao expandir o dataset a permutação mudava inteira: uma única linha
-nova migrava 174 cadeias do manifesto real, 23 delas saindo do teste para o treino. Como
-o build chama write_manifest a cada cadeia adicionada, expandir o dataset contaminaria o
-split de seleção de modelo e invalidaria todo número já medido.
+`write_manifest` used to draw the split for ALL rows on every commit. With a fixed row
+count that was harmless, but when expanding the dataset the whole permutation changed: a
+single new row migrated 174 chains of the real manifest, 23 of them moving from test into
+train. Since build calls write_manifest for every chain added, expanding the dataset would
+contaminate the model-selection split and invalidate every number already measured.
 
-Estes testes rodam contra o `data/manifest.csv` REAL, não contra um sintético: é o
-histórico experimental que precisa ser preservado.
+These tests run against the REAL `data/manifest.csv`, not a synthetic one: it is the
+experimental history that must be preserved.
 
-Executar (com o venv ativo, a partir da raiz do repo):
+Run (with the venv active, from the repo root):
     python -m pytest scripts/test_manifest_split.py -q
 ou, sem pytest:
     python scripts/test_manifest_split.py
@@ -55,8 +55,8 @@ def test_noop_preserva_splits():
         assert _read(p) == before
 
 
-def test_expansao_incremental_nao_migra_ninguem():
-    """O cenário do bug: uma chamada por cadeia adicionada, como faz commit()."""
+def test_incremental_expansion_migrates_nobody():
+    """The bug scenario: one call per chain added, as commit() does."""
     orig = _orig()
     before = {r["name"]: r["split"] for r in orig}
     rows = [dict(r) for r in orig]

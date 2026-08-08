@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Portão denso (teste) nos checkpoints das seeds 43 e 44.
-# As seeds 42 já têm gate: outputs/gate_passo3.txt e outputs/gate_ssaux.txt.
+# Seed 42 already has gates: outputs/gate_passo3.txt and outputs/gate_ssaux.txt.
 #
-# Reentrante: pula gate cuja saída já tenha a linha de macro.
+# Re-entrant: skips a gate whose output already has the macro line.
 #
 #   bash scripts/run_gates.sh
 set -u
@@ -13,7 +13,7 @@ PY=.venv/bin/python
 gate() {  # gate <config> <ckpt_dir> <saida>
     local cfg="$1" dir="$2" out="$3"
     if [[ -f "$out" ]] && grep -qi 'macro' "$out"; then
-        echo ">>> PULANDO $out (já existe)"
+        echo ">>> SKIPPING $out (already exists)"
         return 0
     fi
     echo ">>> $(date +%H:%M) portão de $dir -> $out"

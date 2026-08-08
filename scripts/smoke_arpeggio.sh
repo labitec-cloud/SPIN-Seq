@@ -1,26 +1,26 @@
 #!/usr/bin/env bash
-# Smoke test do Arpeggio: baixa 1 estrutura, protona e roda o pdbe-arpeggio,
-# confirmando que a supervisão pode ser gerada. Saída em data/arpeggio/.
-# Uso: bash scripts/smoke_arpeggio.sh [PDB_ID]
+# Arpeggio smoke test: downloads 1 structure, protonates it and runs pdbe-arpeggio,
+# confirming that the supervision can be generated. Output in data/arpeggio/.
+# Usage: bash scripts/smoke_arpeggio.sh [PDB_ID]
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-PDB="${1:-1ubq}"          # ubiquitina por padrão
+PDB="${1:-1ubq}"          # ubiquitin by default
 RAW="data/raw"
 OUT="data/arpeggio/${PDB}"
 mkdir -p "$RAW" "$OUT"
 
 CIF="$RAW/${PDB}.cif"
 if [ ! -f "$CIF" ]; then
-  echo ">> Baixando ${PDB}.cif do RCSB"
+  echo ">> Downloading ${PDB}.cif from the RCSB"
   curl -fsSL "https://files.rcsb.org/download/${PDB}.cif" -o "$CIF"
 fi
 
-echo ">> Rodando pdbe-arpeggio em ${PDB}"
-# pdbe-arpeggio aceita mmCIF; requer hidrogênios. Muitas versões protonam
-# internamente via OpenBabel. Se a sua versão exigir protonação prévia,
-# gere um CIF protonado antes (ver nota no README/PLANO).
+echo ">> Running pdbe-arpeggio on ${PDB}"
+# pdbe-arpeggio accepts mmCIF; it requires hydrogens. Many versions protonate
+# internally via OpenBabel. If your version requires prior protonation,
+# generate a protonated CIF beforehand (see the note in the README).
 pdbe-arpeggio -o "$OUT" "$CIF"
 
-echo ">> Saídas em $OUT:"
+echo ">> Outputs in $OUT:"
 ls -la "$OUT"

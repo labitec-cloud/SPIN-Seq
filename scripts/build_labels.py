@@ -2,7 +2,7 @@
 
 Para cada PDB: baixa o mmCIF (se faltar), roda o pdbe-arpeggio (se faltar o JSON),
 constrói os rótulos por cadeia e salva em data/labels/<pdb>_<chain>.npz.
-Ao final imprime estatísticas globais por tipo de interação.
+At the end it prints global statistics per interaction type.
 
 Uso:
     python scripts/build_labels.py 1ubq 1crn 4hhb
@@ -99,7 +99,7 @@ def main() -> None:
     print("\n===== ESTATÍSTICAS GLOBAIS =====")
     print(f"cadeias: {n_chains} | resíduos: {total_residues} | pares positivos: {total_pairs}")
     if types_ref:
-        print("por tipo de interação:")
+        print("per interaction type:")
         for t in types_ref:
             c = global_counts[t]
             pct = 100 * c / max(total_pairs, 1)

@@ -1,12 +1,12 @@
-"""Fase 2 — cacheia embeddings ESM-2 para as cadeias já rotuladas (Fase 1).
+"""Caches ESM-2 embeddings for the chains that already have labels.
 
-Percorre data/labels/*.npz, extrai a sequência de cada cadeia e salva as features
+Walks data/labels/*.npz, extracts the sequence of each chain and saves the features
 do ESM-2 em data/embeddings/<mesmo_nome>.npz. O nome casa 1:1 com o rótulo, o que
 garante alinhamento resíduo-a-resíduo entre features e supervisão.
 
 Uso:
     python scripts/build_embeddings.py                 # todas as cadeias rotuladas
-    python scripts/build_embeddings.py --attn          # inclui mapas de atenção
+    python scripts/build_embeddings.py --attn          # include attention maps
     python scripts/build_embeddings.py --glob '1ubq_*' # subconjunto
 """
 from __future__ import annotations
@@ -27,7 +27,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/default.yaml")
     ap.add_argument("--glob", default="*", help="padrão dos rótulos em data/labels")
-    ap.add_argument("--attn", action="store_true", help="salvar mapas de atenção (pesado)")
+    ap.add_argument("--attn", action="store_true", help="save attention maps (heavy)")
     ap.add_argument("--overwrite", action="store_true")
     args = ap.parse_args()
 

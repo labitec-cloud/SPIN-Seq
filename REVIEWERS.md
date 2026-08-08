@@ -6,8 +6,14 @@ sequence”** (BSB 2026, short paper) to the file in this repository that produc
 Nothing here is a summary written after the fact: `outputs/` holds the **raw stdout** of the runs.
 Model weights (`.pt`, ~265 MB) are not versioned; every number that does not require them is.
 
-> **Language note.** `README.md` is in Portuguese, matching the development history. This file is
-> in English, matching the paper.
+> **Language note.** Documentation, code comments and configs are in English. **`outputs/` is
+> not, and stays that way on purpose:** those files are raw `stdout` from the runs. Translating
+> them would turn evidence into edited text, so they are left byte-for-byte as produced. The
+> headings you will meet there: `AVALIAÇÃO DENSA` = dense evaluation, `todos os pares válidos` =
+> all valid pairs, `cadeias` = chains, `classe` = class, `faixa de separação` = separation range,
+> `acaso` = chance, `prevalência` = prevalence, `tipos por aresta de contato` = types per contact
+> edge, `bits que o contact map NÃO resolve por aresta` = bits the contact map does NOT resolve
+> per edge.
 
 ![SPIN-Seq pipeline](figures/fig1_pipeline.png)
 

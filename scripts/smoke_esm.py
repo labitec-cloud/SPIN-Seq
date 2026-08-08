@@ -1,4 +1,4 @@
-"""Smoke test do ESM-2: extrai embeddings por resíduo de 1 sequência e a matriz
+"""ESM-2 smoke test: extracts per-residue embeddings of 1 sequence and the
 de contatos prevista, confirmando que o modelo roda na GPU (com fp16 se pedido).
 
 Uso:
@@ -11,7 +11,7 @@ import torch
 import esm
 
 
-# Sequência curta de exemplo (ubiquitina, 76 resíduos) — leve para 4 GB de VRAM.
+# Short example sequence (ubiquitin, 76 residues) - light for 4 GB of VRAM.
 SEQ = (
     "MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG"
 )
@@ -45,7 +45,7 @@ def main() -> None:
 
     print(f">> OK  | L={len(SEQ)}  embeddings={tuple(emb.shape)}  contatos={tuple(contacts.shape)}")
     if device == "cuda":
-        print(f">> VRAM máx: {torch.cuda.max_memory_allocated()/1e9:.2f} GB")
+        print(f">> peak VRAM: {torch.cuda.max_memory_allocated()/1e9:.2f} GB")
 
 
 if __name__ == "__main__":

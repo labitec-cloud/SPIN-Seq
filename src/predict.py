@@ -1,16 +1,16 @@
-"""Inferência SPIN-Seq — RIN previsto a partir de UMA SEQUÊNCIA, sem estrutura.
+"""SPIN-Seq inference - a predicted RIN from ONE SEQUENCE, with no structure.
 
-Faz o caminho completo: sequência -> ESM-2 (congelado) -> PairConv2D -> probabilidade de
-contato e dos 8 tipos de interação para cada par (i,j) com i<j e |i-j| >= seq_sep_min.
+Runs the full path: sequence -> ESM-2 (frozen) -> PairConv2D -> probability of
+contact and of the 8 interaction types for each pair (i,j) with i<j and |i-j| >= seq_sep_min.
 
-Nada aqui lê PDB, DSSP ou Arpeggio: é o modo de uso real do modelo. O `--pdb` opcional serve
-só para COMPARAR com rótulos que já existam no dataset (modo de conferência, não de inferência).
+Nothing here reads PDB, DSSP or Arpeggio: this is the real usage mode. The optional `--pdb` is
+only for COMPARING against labels that already exist in the dataset (verification mode, not inference).
 
 Uso:
     python src/predict.py --seq MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG
     python src/predict.py --fasta minha.fasta --top 30
     python src/predict.py --seq ... --csv saida.csv --npz saida.npz
-    python src/predict.py --pdb 1ubq_A          # confere contra os rótulos do dataset
+    python src/predict.py --pdb 1ubq_A          # check against the dataset labels
 """
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ AA_VALID = set("ACDEFGHIKLMNPQRSTVWY")
 
 
 def read_fasta(path: str) -> tuple[str, str]:
-    """Primeiro registro do FASTA -> (nome, sequência em maiúsculas)."""
+    """First FASTA record -> (name, uppercase sequence)."""
     name, parts = os.path.basename(path), []
     with open(path) as fh:
         for line in fh:
@@ -48,10 +48,10 @@ def read_fasta(path: str) -> tuple[str, str]:
 
 
 def build_model(ck, cfg, emb_dim, use_esm, device):
-    """Reconstrói o PairConv2D a partir do PRÓPRIO checkpoint.
+    """Rebuilds the PairConv2D from the checkpoint ITSELF.
 
-    aa_dim, use_ss, nº de bins de distância e presença do canal de par de SS são deduzidos do
-    state_dict, então o config só precisa bater em proj_dim/channels/n_blocks/dilations.
+    aa_dim, use_ss, the number of distance bins and the presence of the SS pair channel are deduced
+    from the state_dict, so the config only needs to match proj_dim/channels/n_blocks/dilations.
     """
     cc = cfg["conv2d"]
     sd = ck["model"]
@@ -70,7 +70,7 @@ def build_model(ck, cfg, emb_dim, use_esm, device):
 
 @torch.no_grad()
 def predict(model, emb, contacts, seq, device, use_esm):
-    """Passa a cadeia inteira de uma vez (L<=350 cabe folgado) e simetriza a saída."""
+    """Runs the whole chain at once (L<=350 fits comfortably) and symmetrises the output."""
     L = len(seq)
     er = torch.from_numpy(emb).unsqueeze(0).to(device)
     sep = torch.from_numpy(
@@ -78,22 +78,22 @@ def predict(model, emb, contacts, seq, device, use_esm):
     ).unsqueeze(0).to(device)
     cf = torch.from_numpy(contacts).unsqueeze(0).to(device) if use_esm else None
     aa = torch.from_numpy(seq_to_idx(seq)).unsqueeze(0).to(device)
-    ss = torch.full((1, L), 3, dtype=torch.long, device=device)  # SS desconhecida: só-sequência
+    ss = torch.full((1, L), 3, dtype=torch.long, device=device)  # SS unknown: sequence-only
     lc, lt, _ = model(er, er, sep, cf, symmetrize=True,
                       aa_row=aa, aa_col=aa, ss_row=ss, ss_col=ss)
     return torch.sigmoid(lc)[0].cpu().numpy(), torch.sigmoid(lt)[0].cpu().numpy()
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Inferência do RIN a partir da sequência")
+    ap = argparse.ArgumentParser(description="RIN inference from the sequence")
     src = ap.add_mutually_exclusive_group(required=True)
-    src.add_argument("--seq", help="sequência de aminoácidos (1 letra)")
+    src.add_argument("--seq", help="amino-acid sequence (one-letter)")
     src.add_argument("--fasta", help="arquivo FASTA (usa o primeiro registro)")
-    src.add_argument("--pdb", help="nome no dataset (ex. 1ubq_A): usa embedding e rótulos em cache")
+    src.add_argument("--pdb", help="dataset name (e.g. 1ubq_A): uses cached embeddings and labels")
     ap.add_argument("--config", default="configs/esm650m_aa.yaml")
     ap.add_argument("--ckpt", default="outputs/conv2d_650m_aa/best.pt")
-    ap.add_argument("--top", type=int, default=20, help="quantos pares listar por classe")
-    ap.add_argument("--csv", help="salva TODOS os pares válidos em CSV")
+    ap.add_argument("--top", type=int, default=20, help="how many pairs to list per class")
+    ap.add_argument("--csv", help="save ALL valid pairs to CSV")
     ap.add_argument("--npz", help="salva os mapas L×L completos")
     ap.add_argument("--device", default=None, help="cuda|cpu (default: cuda se houver)")
     args = ap.parse_args()
@@ -103,13 +103,13 @@ def main():
     use_esm = bool(cfg["train"].get("use_esm_contact_feat", True))
     device = args.device or ("cuda" if torch.cuda.is_available() else "cpu")
 
-    # ---- 1. sequência + features do ESM-2 -------------------------------------------------
+    # ---- 1. sequence + ESM-2 features -------------------------------------------------
     labels = None
     if args.pdb:
         name = args.pdb
         ef = os.path.join(cfg["paths"]["embeddings"], f"{name}.npz")
         if not os.path.exists(ef):
-            ap.error(f"sem embedding em cache: {ef}")
+            ap.error(f"no cached embedding: {ef}")
         e = np.load(ef, allow_pickle=True)
         emb = e["emb"].astype(np.float32)
         contacts = np.nan_to_num(e["contacts"].astype(np.float32))
@@ -117,20 +117,20 @@ def main():
         lf = os.path.join(cfg["paths"]["labels"], f"{name}.npz")
         if os.path.exists(lf):
             labels = np.load(lf, allow_pickle=True)
-        print(f">> cache: {name} L={len(seq)}" + ("  (com rótulos p/ conferência)" if labels
+        print(f">> cache: {name} L={len(seq)}" + ("  (with labels for verification)" if labels
                                                   is not None else ""))
     else:
         name, seq = (("seq", args.seq.strip().upper()) if args.seq else read_fasta(args.fasta))
         if not seq:
-            ap.error("sequência vazia")
+            ap.error("empty sequence")
         bad = sorted(set(seq) - AA_VALID)
         if bad:
-            # o ESM-2 tolera X/B/Z; o embedding de AA manda tudo isso para AA_UNK
-            print(f">> aviso: resíduos não-padrão {bad} -> tratados como desconhecido (AA_UNK)")
+            # ESM-2 tolerates X/B/Z; the AA embedding sends all of those to AA_UNK
+            print(f">> warning: non-standard residues {bad} -> treated as unknown (AA_UNK)")
         dmin, dmax = cfg["dataset"]["min_len"], cfg["dataset"]["max_len"]
         if not (dmin <= len(seq) <= dmax):
             print(f">> AVISO: L={len(seq)} fora da faixa de TREINO [{dmin}, {dmax}] — "
-                  "o modelo nunca viu esse regime, trate o resultado como extrapolação")
+                  "the model never saw this regime; treat the result as extrapolation")
         print(f">> ESM-2 ({cfg['esm']['model']}) em {device}...")
         from src.features.esm_embeddings import ESMExtractor
 
@@ -141,24 +141,24 @@ def main():
 
     L = len(seq)
     if L <= seq_sep:
-        ap.error(f"sequência curta demais: L={L} <= seq_sep_min={seq_sep}")
+        ap.error(f"sequence too short: L={L} <= seq_sep_min={seq_sep}")
 
     # ---- 2. modelo ------------------------------------------------------------------------
     ck = torch.load(args.ckpt, map_location=device)
     types = [str(t) for t in ck["types"]]
     model, ss_pair = build_model(ck, cfg, emb.shape[1], use_esm, device)
     if ss_pair:
-        ap.error(f"{args.ckpt} usa SS (DSSP) como ENTRADA — depende da estrutura 3D e não pode "
-                 "ser usado em inferência só-sequência. Use o checkpoint só-sequência.")
+        ap.error(f"{args.ckpt} uses SS (DSSP) as an INPUT - it depends on the 3D structure and cannot "
+                 "be used for sequence-only inference. Use the sequence-only checkpoint.")
     n_par = sum(p.numel() for p in model.parameters())
     print(f">> ckpt={args.ckpt} params={n_par/1e6:.2f}M tipos={types}")
 
-    # ---- 3. inferência --------------------------------------------------------------------
+    # ---- 3. inference --------------------------------------------------------------------
     pc, pt = predict(model, emb, contacts, seq, device, use_esm)
     vi, vj = np.triu_indices(L, k=seq_sep)
-    print(f">> L={L} pares válidos={len(vi)} (i<j, |i-j|>={seq_sep})")
+    print(f">> L={L} valid pairs={len(vi)} (i<j, |i-j|>={seq_sep})")
 
-    # ---- 4. relatório ---------------------------------------------------------------------
+    # ---- 4. report ---------------------------------------------------------------------
     pc_v = pc[vi, vj]
     print(f"\n== TOP-{args.top} CONTATOS ==")
     print(f"{'i':>5s} {'j':>5s} {'aa':>5s} {'|i-j|':>6s} {'contato':>8s}  " +
@@ -168,7 +168,7 @@ def main():
         print(f"{i+1:5d} {j+1:5d} {seq[i]+'-'+seq[j]:>5s} {j-i:6d} {pc_v[k]:8.3f}  " +
               "  ".join(f"{pt[t, i, j]:6.3f}" for t in range(len(types))))
 
-    print(f"\n== TOP-{min(args.top, 5)} POR TIPO ==")
+    print(f"\n== TOP-{min(args.top, 5)} PER TYPE ==")
     for t, tname in enumerate(types):
         v = pt[t][vi, vj]
         top = np.argsort(-v)[:min(args.top, 5)]
@@ -178,7 +178,7 @@ def main():
 
     # Top-L: os L pares mais confiantes, a leitura usada no artigo.
     nl = np.argsort(-pc_v)[:L]
-    print(f"\n>> densidade prevista: Top-L (L={L}) tem contato médio "
+    print(f"\n>> predicted density: Top-L (L={L}) has mean contact "
           f"{pc_v[nl].mean():.3f}; pares acima de 0.5 = {int((pc_v > 0.5).sum())}")
 
     if labels is not None:
@@ -187,11 +187,11 @@ def main():
         tgt[labels["idx_i"].astype(int), labels["idx_j"].astype(int)] = 1.0
         y = tgt[vi, vj]
         order = np.argsort(-pc_v)[:L]
-        print(f">> CONFERÊNCIA contra rótulos: positivos reais={int(y.sum())} | "
-              f"precisão no Top-L={y[order].mean():.3f}")
+        print(f">> CHECK against labels: true positives={int(y.sum())} | "
+              f"Top-L precision={y[order].mean():.3f}")
         del ltypes
 
-    # ---- 5. saídas ------------------------------------------------------------------------
+    # ---- 5. outputs ------------------------------------------------------------------------
     if args.csv:
         with open(args.csv, "w", newline="") as fh:
             w = csv.writer(fh)

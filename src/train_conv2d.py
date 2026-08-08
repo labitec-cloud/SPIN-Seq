@@ -1,8 +1,8 @@
-"""Treino da cabeça 2D (Fase 4) — por crops w×w.
+"""Training of the 2D head - on w x w crops.
 
-Reusa o split por cluster do manifest e a métrica AUPRC por tipo do baseline; a diferença é que
-o modelo é o PairConv2D e as métricas/perda agregam só nos PIXELS VÁLIDOS de cada crop (máscara
-`lm`). Checkpoint resumível por época como no train.py.
+Reuses the manifest's cluster split and the baseline's per-type AUPRC metric; the difference is
+that the model is PairConv2D and the metrics/loss aggregate only over the VALID PIXELS of each
+crop (mask `lm`). Checkpoint resumable per epoch, as in train.py.
 
 Uso:
     python src/train_conv2d.py                      # configs/default.yaml -> outputs/conv2d
@@ -29,7 +29,7 @@ from src.train import auprc_per_type
 
 
 def ema_init(model):
-    """Cópia sombra (float) dos tensores do modelo — média exponencial dos pesos (§2.1)."""
+    """Shadow (float) copy of the model tensors - exponential moving average of the weights."""
     return {k: v.detach().clone().float()
             for k, v in model.state_dict().items() if v.dtype.is_floating_point}
 
@@ -42,7 +42,7 @@ def ema_update(ema, model, decay):
 
 
 def ema_swap(model, ema):
-    """Instala os pesos EMA no modelo e devolve backup dos originais (para restaurar)."""
+    """Installs the EMA weights into the model and returns a backup of the originals (to restore)."""
     msd = model.state_dict()
     backup = {k: msd[k].detach().clone() for k in ema}
     model.load_state_dict({k: (ema[k].to(msd[k].dtype) if k in ema else msd[k])
@@ -64,8 +64,8 @@ def save_atomic(obj, path):
 
 def run_epoch(model, loader, device, lambdas, gamma, alpha, opt=None, class_weight=None,
               dist_edges=None, asl=None, lambda_ss=0.0, ema=None, ema_decay=0.0):
-    """Treino: só a loss (não acumula predições — evitaria GBs de RAM/época).
-    Validação (opt=None): coleta predições nos pixels válidos para AUPRC."""
+    """Training: loss only (does not accumulate predictions - that would cost GBs of RAM per epoch).
+    Validation (opt=None): collects predictions on the valid pixels for AUPRC."""
     train = opt is not None
     model.train(train)
     tot, nb = 0.0, 0
@@ -78,8 +78,8 @@ def run_epoch(model, loader, device, lambdas, gamma, alpha, opt=None, class_weig
             loss, _ = multitask_loss(out, batch, lambdas, gamma, alpha, class_weight,
                                      dist_edges, asl)
             if lambda_ss > 0 and getattr(model, "use_ss", False):
-                ssl = model.ss_predict(er)          # B×w×3
-                mss = sr != 3                        # resíduos válidos (não-padding)
+                ssl = model.ss_predict(er)          # B x w x 3
+                mss = sr != 3                        # valid residues (not padding)
                 if mss.any():
                     aux = torch.nn.functional.cross_entropy(ssl[mss], sr[mss])
                     loss = loss + lambda_ss * aux
@@ -113,13 +113,13 @@ def main():
     ap.add_argument("--out", default="outputs/conv2d")
     ap.add_argument("--no-resume", action="store_true")
     ap.add_argument("--frac", type=float, default=1.0,
-                    help="fração do split de TREINO (curva de aprendizado); val intacta")
-    ap.add_argument("--epochs", type=int, default=None, help="sobrepõe conv2d.epochs")
+                    help="fraction of the TRAINING split (learning curve); val untouched")
+    ap.add_argument("--epochs", type=int, default=None, help="overrides conv2d.epochs")
     ap.add_argument("--cpu", action="store_true",
-                    help="permite treinar em CPU; sem isso, CUDA ausente aborta o run")
+                    help="allows training on CPU; without it, a missing CUDA aborts the run")
     ap.add_argument("--seed", type=int, default=None,
-                    help="sobrepõe cfg.seed: muda inicialização e ordem dos dados, NÃO o "
-                         "split (que vem do manifest) nem o subconjunto de --frac")
+                    help="overrides cfg.seed: changes initialisation and data order, NOT the "
+                         "split (which comes from the manifest) nor the --frac subset")
     args = ap.parse_args()
 
     cfg = yaml.safe_load(open(args.config))
@@ -127,23 +127,23 @@ def main():
     if args.epochs is not None:
         cc["epochs"] = args.epochs
     seed = cfg["seed"] if args.seed is None else args.seed
-    # cfg["seed"] fica intacto de propósito: é ele que fixa o subconjunto de --frac, que
-    # precisa continuar aninhado entre frações mesmo quando a seed do treino muda.
+    # cfg["seed"] is left intact on purpose: it is what fixes the --frac subset, which must
+    # stay nested across fractions even when the training seed changes.
     cfg["run_seed"] = seed
     rng = np.random.default_rng(seed)
     torch.manual_seed(seed)
     if args.seed is not None:
-        print(f">> seed={seed} (sobrepõe cfg.seed={cfg['seed']})")
-    # Falha rápido em vez de degradar em silêncio: um treino que cai para CPU sem avisar
-    # gasta a noite inteira e não termina. Acontece na prática — suspender a máquina
+        print(f">> seed={seed} (overrides cfg.seed={cfg['seed']})")
+    # Fail fast instead of degrading silently: a run that falls back to CPU without warning
+    # burns the whole night and never finishes. It happens in practice - suspending the
     # quebra o contexto CUDA (`sudo rmmod nvidia_uvm && sudo modprobe nvidia_uvm` resolve),
-    # com o nvidia-smi continuando saudável. Use --cpu para treinar em CPU de propósito.
+    # machine, with nvidia-smi still looking healthy. Use --cpu to train on CPU on purpose.
     if not torch.cuda.is_available():
         if not args.cpu:
             raise SystemExit(
-                "CUDA indisponível e a config pede GPU. Se a máquina foi suspensa:\n"
+                "CUDA unavailable and the config asks for a GPU. If the machine was suspended:\n"
                 "    sudo rmmod nvidia_uvm && sudo modprobe nvidia_uvm\n"
-                "Para treinar em CPU mesmo assim (lento), passe --cpu.")
+                "To train on CPU anyway (slow), pass --cpu.")
         print(">> AVISO: treinando em CPU (--cpu)")
     device = "cuda" if torch.cuda.is_available() else "cpu"
     os.makedirs(args.out, exist_ok=True)
@@ -151,8 +151,8 @@ def main():
     train_f = files_from_manifest(cfg, "train")
     val_f = files_from_manifest(cfg, "val")
     if args.frac < 1.0:
-        # rng próprio: a permutação não pode depender do consumo de `rng` pelo dataset, senão os
-        # subconjuntos deixam de ser ANINHADOS entre frações (25% ⊂ 50% ⊂ 75%).
+        # its own rng: the permutation must not depend on the dataset's consumption of `rng`,
+        # otherwise the subsets stop being NESTED across fractions (25% in 50% in 75%).
         perm = np.random.default_rng(cfg["seed"]).permutation(len(train_f))
         k = max(1, int(round(args.frac * len(train_f))))
         train_f = [train_f[i] for i in perm[:k]]
@@ -207,8 +207,8 @@ def main():
              if cc.get("cosine", False) else None)
     patience = int(cc.get("early_stop_patience", 0))
 
-    # §2.1: EMA é cópia PASSIVA (não altera a otimização) → os dois braços (cru e EMA) saem do
-    # MESMO treino: comparação pareada, mesma seed/ordem de dados, metade do custo de 2 runs.
+    # EMA is a PASSIVE copy (it does not alter the optimisation) -> both arms (raw and EMA)
+    # come from the SAME run: a paired comparison, same seed/data order, half the cost of 2 runs.
     ema_decay = float(cc.get("ema_decay", 0.0))
     ema = ema_init(model) if ema_decay > 0 else None
     best_ema = -1.0
@@ -243,7 +243,7 @@ def main():
         macro = float(np.mean(list(ap_types.values()))) if ap_types else 0.0
 
         macro_ema = None
-        if ema is not None:  # valida o braço EMA com os mesmos dados
+        if ema is not None:  # validate the EMA arm on the same data
             bk = ema_swap(model, ema)
             _, pce, tce, pte, tte = run_epoch(model, vl, device, lambdas, gamma, alpha,
                                               dist_edges=dist_edges, asl=asl, lambda_ss=lambda_ss)
@@ -273,7 +273,7 @@ def main():
                      "best_ema": best_ema, "ema": ema,
                      "cfg": cfg, "types": names}, ckpt_path)
         if patience and since_best >= patience:
-            print(f">> early stopping na epoca {ep} (sem melhora ha {since_best} epocas)")
+            print(f">> early stopping at epoch {ep} (no improvement for {since_best} epochs)")
             break
     print(f">> melhor AUPRC_types_macro={best:.3f} salvo em {args.out}/best.pt")
     if ema is not None:

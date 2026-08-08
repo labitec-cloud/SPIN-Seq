@@ -1,13 +1,13 @@
-"""Dataset de CROPS 2D para a cabeça convolucional (Fase 4).
+"""2D CROP dataset for the convolutional head.
 
-O PairConv2D consome a matriz L×L, que não cabe na VRAM para cadeias grandes. Aqui cada item
-é uma janela quadrada `w×w` de uma cadeia: sub-tensores de embedding de linha/coluna e os alvos
-densos (contato, tipos, distância) recortados dessa janela a partir dos rótulos ESPARSOS
-(`idx_i/idx_j/labels`, só pares positivos com i<j).
+PairConv2D consumes the L x L matrix, which does not fit in VRAM for large chains. Here each
+item is a square `w x w` window of a chain: row/column embedding sub-tensors and the dense
+targets (contact, types, distance) cut from that window out of the SPARSE labels
+(`idx_i/idx_j/labels`, positive pairs with i<j only).
 
-Tamanho fixo `w` para permitir empilhamento em batch: cadeias com L<w são preenchidas (padding)
-e a região preenchida é zerada na máscara de perda. A janela pode ser centrada num par positivo
-(com prob. `pos_center_prob`) para não desperdiçar passos em crops vazios.
+A fixed size `w` allows batch stacking: chains with L<w are padded and the padded region is
+zeroed in the loss mask. The window can be centred on a positive pair (with probability
+`pos_center_prob`) so as not to waste steps on empty crops.
 """
 from __future__ import annotations
 
@@ -41,7 +41,7 @@ class ChainCropDataset(Dataset):
             if os.path.exists(ef):
                 self.pairs.append((ef, lf))
         if not self.pairs:
-            raise RuntimeError("nenhuma cadeia com embedding+rótulo encontrada")
+            raise RuntimeError("no chain with both embedding and label was found")
 
         # tipos preditos (ordem/nomes) a partir da 1ª cadeia
         l0 = np.load(self.pairs[0][1], allow_pickle=True)
@@ -63,7 +63,7 @@ class ChainCropDataset(Dataset):
         l = np.load(lf, allow_pickle=True)
         emb = e["emb"].astype(np.float32)
         L = int(l["length"])
-        # alguns mapas de contato do ESM têm NaN/inf (16 cadeias) → zera para não propagar
+        # some ESM contact maps contain NaN/inf (16 chains) -> zero them so they do not propagate
         contacts = (np.nan_to_num(e["contacts"].astype(np.float32))
                     if self.use_esm and "contacts" in e else None)
         idx_i = l["idx_i"].astype(np.int64)
@@ -78,12 +78,12 @@ class ChainCropDataset(Dataset):
         return emb, L, contacts, idx_i, idx_j, labels, dist, aa, ss
 
     def _pick_window(self, L, idx_i, idx_j, rare_mask=None):
-        """Escolhe (a,b) = início de linha/coluna da janela w×w."""
+        """Chooses (a,b) = row/column start of the w x w window."""
         w = self.w
         if L <= w:
-            return 0, 0, L  # cadeia inteira, sem sobra p/ deslocar
+            return 0, 0, L  # the whole chain, no slack to shift
         if len(idx_i) > 0 and self.rng.random() < self.pos_center_prob:
-            # com rare_center_prob, centra num positivo de classe rara (se houver)
+            # with rare_center_prob, centre on a rare-class positive (if any)
             if (rare_mask is not None and rare_mask.any()
                     and self.rng.random() < self.rare_center_prob):
                 cand = np.where(rare_mask)[0]
@@ -119,8 +119,8 @@ class ChainCropDataset(Dataset):
         sr[:wa] = ss[a:a + wa]
         sc[:wa] = ss[b:b + wa]
 
-        gi = np.arange(a, a + wa)  # índices globais das linhas válidas
-        gj = np.arange(b, b + wa)  # e das colunas
+        gi = np.arange(a, a + wa)  # global indices of the valid rows
+        gj = np.arange(b, b + wa)  # and of the columns
         sep = np.zeros((w, w), np.float32)
         sep[:wa, :wa] = np.log1p(np.abs(gi[:, None] - gj[None, :]))
 
@@ -133,13 +133,13 @@ class ChainCropDataset(Dataset):
         yd = np.zeros((w, w), np.float32)
         dm = np.zeros((w, w), np.float32)
 
-        # máscara de perda: válida na região não-preenchida e com |gi-gj| >= seq_sep
+        # loss mask: valid in the non-padded region and with |gi-gj| >= seq_sep
         lm = np.zeros((w, w), np.float32)
         valid = np.abs(gi[:, None] - gj[None, :]) >= self.seq_sep
         lm[:wa, :wa] = valid.astype(np.float32)
 
-        # densifica os positivos nas duas orientações (rótulo guarda só i<j):
-        # (linha=i,coluna=j) e o espelho (linha=j,coluna=i) — a matriz é simétrica
+        # densify the positives in both orientations (the label stores only i<j):
+        # (row=i,col=j) and the mirror (row=j,col=i) - the matrix is symmetric
         for ri, ci in ((idx_i, idx_j), (idx_j, idx_i)):
             mr = (ri >= a) & (ri < a + wa)
             mc = (ci >= b) & (ci < b + wa)

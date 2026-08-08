@@ -1,21 +1,24 @@
-"""Tese RIN vs contact map (§9.7/§9.9) — quanto se perde ao só detectar proximidade.
+"""RIN vs contact map, the thesis - how much is lost by detecting proximity alone.
 
-Duas partes, ambas no portão denso (test, todos os pares válidos):
+Two parts, both at the dense gate (test, every valid pair):
 
-A) SÓ RÓTULOS (sem modelo): dado que o par é contato, quanto resta de incerteza sobre o TIPO?
-   Reporta multiplicidade de tipos por aresta e a entropia condicional H(tipo|contato) por classe,
-   em bits. Se fosse ~0, o contact map determinaria o RIN e o artigo não teria tese.
+A) LABELS ONLY (no model): given that the pair is a contact, how much uncertainty remains about
+   the TYPE? Reports type multiplicity per edge and the conditional entropy H(type|contact) per
+   class, in bits. If it were ~0, the contact map would determine the RIN and the paper would have
+   no thesis.
 
-B) COM MODELO (opcional, --ckpt): AUPRC por classe de quatro rankers no MESMO conjunto de pares:
-     prevalence  — ranker aleatório (piso).
-     oracle      — contato VERDADEIRO como score do tipo. É o TETO da abordagem contact-map:
-                   o melhor que um contact map perfeito consegue sem tipar a aresta.
+B) WITH MODEL (optional, --ckpt): per-class AUPRC of four rankers on the SAME set of pairs:
+     prevalence  - random ranker (the floor).
+     oracle      - the TRUE contact used as the type score. It is the CEILING of the
+                   contact-map approach: the best a perfect contact map can do without typing
+                   the edge.
      p_contact   — head de contato do nosso modelo usado como score do tipo (contact map real).
      RIN         — head de tipos do nosso modelo.
-   Ganho da tese = RIN - oracle. Positivo ⇒ tipar a aresta usa informação que proximidade não dá.
+   Thesis gain = RIN - oracle. Positive => typing the edge uses information proximity does not
+   provide.
 
 Uso:
-    python src/analyze_rin.py --config configs/esm650m.yaml                     # só parte A
+    python src/analyze_rin.py --config configs/esm650m.yaml                     # part A only
     python src/analyze_rin.py --config configs/esm650m.yaml \
         --model conv2d --ckpt outputs/conv2d_650m/best.pt --device cpu
 """
@@ -69,11 +72,11 @@ def report_labels(names, y_types, y_contact):
 
 
 def report_models(names, y_types, y_contact, p_contact=None, p_types=None, p_prop=None):
-    """Parte B: AUPRC por classe dos rankers (piso, teto-do-contato, propensão, modelo).
+    """Part B: per-class AUPRC of the rankers (floor, contact ceiling, propensity, model).
 
-    `propensity` é a tabela de par de AA (src/baseline_propensity.py): responde quanto do
-    resultado é identidade de aminoácido e não o ESM-2. As colunas de ganho isolam as duas
-    objeções — RIN-oracle (proximidade não basta) e RIN-prop (identidade não basta).
+    `propensity` is the AA-pair table (src/baseline_propensity.py): it answers how much of the
+    result is amino-acid identity rather than ESM-2. The gain columns isolate the two objections -
+    RIN-oracle (proximity is not enough) and RIN-prop (identity is not enough).
     """
     cols = ["prevalence", "oracle"]
     if p_prop is not None:
@@ -117,7 +120,7 @@ def main():
     ap.add_argument("--split", default="test")
     ap.add_argument("--device", default="cpu")
     ap.add_argument("--propensity", nargs="?", const=DEFAULT_TABLE,
-                    help="adiciona a coluna da baseline de propensão de par de AA")
+                    help="add the AA-pair propensity baseline column")
     args = ap.parse_args()
 
     cfg = yaml.safe_load(open(args.config))

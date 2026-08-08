@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Variância de inicialização + desempate passo 3 vs SS-aux.
+# Initialisation variance + step 3 vs SS-aux tie-break.
 #
-# Os runs existentes (outputs/conv2d_650m_aa, outputs/conv2d_ssaux) já são a seed 42,
-# então aqui só faltam 43 e 44 de cada braço para fechar 3 sementes por receita.
+# The existing runs (outputs/conv2d_650m_aa, outputs/conv2d_ssaux) are already seed 42,
+# so only 43 and 44 of each arm are missing to complete 3 seeds per recipe.
 #
-# Sequencial de propósito: a GTX 1650 (4 GB) não comporta dois treinos ao mesmo tempo.
+# Sequential on purpose: the GTX 1650 (4 GB) cannot hold two training runs at once.
 #
-# Reentrante: dá para desligar a máquina e retomar com o mesmo comando. Um run só é
-# considerado PRONTO se o log tiver a linha final do treino — NÃO basta existir best.pt,
-# que é regravado a cada melhora de validação e portanto já existe em run interrompido.
-# Run incompleto é retomado de last.pt pelo próprio train_conv2d.py (época, best e
-# estado do otimizador), perdendo no máximo a época em andamento.
+# Re-entrant: the machine can be switched off and resumed with the same command. A run is
+# considered DONE only if the log has the final training line - the existence of best.pt is
+# NOT enough, since it is rewritten on every validation improvement and therefore already
+# exists in an interrupted run. An incomplete run is resumed from last.pt by train_conv2d.py
+# (epoch, best and optimiser state), losing at most the epoch in progress.
 #
 #   bash scripts/run_seeds.sh
 set -u
@@ -22,7 +22,7 @@ FIM='^>> melhor AUPRC_types_macro'   # última linha que o treino imprime ao con
 run() {  # run <config> <out> <seed>
     local cfg="$1" out="$2" seed="$3" log="${2}.log"
     if [[ -f "$log" ]] && grep -q "$FIM" "$log"; then
-        echo ">>> PULANDO $out (treino já concluído)"
+        echo ">>> SKIPPING $out (training already finished)"
         return 0
     fi
     if [[ -f "$out/last.pt" ]]; then
@@ -30,7 +30,7 @@ run() {  # run <config> <out> <seed>
     else
         echo ">>> $(date +%H:%M) iniciando $out (seed=$seed, $cfg)"
     fi
-    # >> append: retomada não apaga o histórico de épocas já treinadas
+    # >> append: resuming does not erase the history of epochs already trained
     $PY -u src/train_conv2d.py --config "$cfg" --out "$out" --seed "$seed" >> "$log" 2>&1
     local rc=$?
     if [[ $rc -ne 0 ]]; then

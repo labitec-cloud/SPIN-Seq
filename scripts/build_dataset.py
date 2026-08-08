@@ -1,9 +1,9 @@
 """Fase 2.5 — monta um dataset não-redundante ponta a ponta.
 
-Dedup: 1 representante por cluster de sequência a 30% (arquivo do RCSB) → sem
-vazamento entre splits. Para cada representante: baixa mmCIF, filtra (resolução,
+Dedup: 1 representative per 30% sequence-identity cluster (RCSB file) -> no
+leakage between splits. For each representative: downloads the mmCIF, filters (resolution,
 tamanho, proteína), roda Arpeggio, gera rótulos e embeddings ESM-2, e registra
-no manifest com o split. Resumível: pula o que já foi feito.
+in the manifest with the split. Resumable: skips what is already done.
 
 Uso:
     python scripts/build_dataset.py --target 300
@@ -89,11 +89,11 @@ def representative_pdbs(dcfg: dict, want: int, seen: set[str],
             continue
         cid = p2c.get(pdb)
         if cid is not None and cid in used_clusters:
-            continue  # dedup por cluster de sequência (30%)
+            continue  # dedup by sequence cluster (30%)
         if cid is not None:
             used_clusters.add(cid)
         out.append(pdb)
-        if len(out) >= want * 5:  # margem para rejeições (pick_chain/arpeggio/0 pares)
+        if len(out) >= want * 5:  # margin for rejections (pick_chain/arpeggio/0 pairs)
             break
     return out
 
@@ -201,14 +201,14 @@ MANIFEST_FIELDS = ["pdb", "chain", "name", "L", "resolution", "n_pairs", "split"
 
 def write_manifest(path: str, rows: list[dict], split_fr, seed: int,
                    reshuffle: bool = False) -> None:
-    """Sorteia split SÓ para as linhas novas; as já atribuídas ficam congeladas.
+    """Draws the split ONLY for new rows; already assigned ones stay frozen.
 
-    A versão anterior refazia `permutation(len(rows))` a cada chamada — e como o
-    build chama isto a cada cadeia adicionada, qualquer mudança no nº de linhas
+    The previous version redid `permutation(len(rows))` on every call - and since
+    build calls this for every chain added, any change in the row count
     reembaralhava TODOS os splits. Cadeias do test migravam para o train, o que
-    invalida todo número já medido e contamina o split de seleção de modelo.
+    invalidates every number already measured and contaminates the model-selection split.
 
-    `reshuffle=True` refaz o split do zero. Só com intenção explícita: descarta o
+    `reshuffle=True` redoes the split from scratch. Only with explicit intent: it discards the
     histórico experimental inteiro.
     """
     if reshuffle:
@@ -221,7 +221,7 @@ def write_manifest(path: str, rows: list[dict], split_fr, seed: int,
         counts = {s: sum(1 for r in rows if r.get("split") == s) for s in SPLITS}
         total = len(rows)
         # ordem embaralhada (determinística pelo seed) + preenchimento do split mais
-        # em falta: converge para as frações alvo mesmo com adições incrementais.
+        # that is furthest behind: converges to the target fractions even with incremental additions.
         for k in np.random.default_rng(seed).permutation(len(new)):
             s = max(SPLITS, key=lambda x: fr[x] * total - counts[x])
             new[k]["split"] = s
@@ -260,7 +260,7 @@ def main():
             rows = list(csv.DictReader(fh))
         seen = {r["pdb"] for r in rows}
         print(f">> manifest existente: {len(rows)} cadeias")
-    # resumível também a partir de rótulos já gerados (ex. após timeout)
+    # also resumable from labels already generated (e.g. after a timeout)
     import glob
     for lf in glob.glob(os.path.join(paths["labels"], "*.npz")):
         nm = os.path.splitext(os.path.basename(lf))[0]

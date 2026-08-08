@@ -10,9 +10,9 @@ env/
 *.egg-info/
 .ipynb_checkpoints/
 
-# Dados e artefatos pesados (não versionar)
-# Usa /data/* e não /data/ : o git não avalia negação dentro de um diretório
-# já excluído, então o diretório precisa continuar "visitável".
+# Data and heavy artefacts (do not version)
+# Uses /data/* rather than /data/ : git does not evaluate negations inside a directory
+# that is already excluded, so the directory must stay "visitable".
 /data/*
 *.h5
 *.npy
@@ -21,38 +21,38 @@ env/
 *.pth
 *.ckpt
 
-# EXCEÇÃO: o manifesto define o split treino/val/teste por cluster. São 164 KB e
-# sem ele um colaborador que reconstrua o dataset gera um split DIFERENTE, o que
-# torna qualquer número incomparável com os já medidos.
+# EXCEPTION: the manifest defines the train/val/test split by cluster. It is 164 KB and
+# without it a collaborator rebuilding the dataset generates a DIFFERENT split, which
+# makes any number incomparable with the ones already measured.
 !/data/manifest.csv
 
-# EXCEÇÃO: as listas de split em texto puro, derivadas do manifesto. São a prova
-# do protocolo anti-vazamento que um revisor confere sem abrir um CSV de 165 KB.
+# EXCEPTION: the plain-text split lists, derived from the manifest. They are the proof
+# of the anti-leakage protocol, checkable without opening a 165 KB CSV.
 !/data/splits/
 !/data/splits/*.txt
 
-# Saídas — /outputs/* pelo mesmo motivo de /data/*. As subpastas (que guardam os
-# .pt) seguem excluídas; só os arquivos soltos no topo são reincluídos abaixo.
+# Outputs - /outputs/* for the same reason as /data/*. The subfolders (which hold the
+# .pt files) stay excluded; only the loose top-level files are re-included below.
 /outputs/*
 /logs/
 wandb/
 *.log
 
-# EXCEÇÃO: os pesos (.pt, 265 MB) ficam de fora, mas a EVIDÊNCIA fica dentro —
-# portões densos, bootstraps e curva de aprendizado somam 136 KB. Sem eles,
-# conferir um número exige re-rodar 7 avaliações de 494 cadeias.
-# Tem de vir DEPOIS de *.log para a negação valer.
+# EXCEPTION: the weights (.pt, 265 MB) stay out, but the EVIDENCE stays in -
+# dense gates, bootstraps and the learning curve add up to 136 KB. Without them,
+# checking a number would require rerunning 7 evaluations over 494 chains.
+# Must come AFTER *.log for the negation to take effect.
 !/outputs/*.txt
 !/outputs/*.csv
 !/outputs/*.log
-# .npz soltos no topo são tabelas pequenas, não pesos: propensity_table.npz tem 72 KB
-# e é o que permite repontuar o baseline sem recontar o split de treino inteiro.
+# Loose top-level .npz files are small tables, not weights: propensity_table.npz is 72 KB
+# and is what allows rescoring the baseline without recounting the whole training split.
 !/outputs/*.npz
 
 # SO
 .DS_Store
 
-# Documentos de trabalho PESSOAIS — enviados por fora, nunca versionados.
+# PERSONAL working documents - shared out of band, never versioned.
 /PLANO.md
 /PLANO_EXECUCAO.md
 /DADOS.md

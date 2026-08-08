@@ -1,15 +1,15 @@
-"""Baseline de propensão de par de aminoácidos — a objeção óbvia do revisor.
+"""Amino-acid pair propensity baseline - the obvious reviewer objection.
 
-`ionic` é Arg–Asp, `aromatic` é His–His, `covalent` é Cys–Cys. Quanto da AUPRC do
-SPIN-Seq nessas classes é o ESM-2 e quanto é uma tabela de lookup 21x21? Esta baseline
+`ionic` is Arg-Asp, `aromatic` is His-His, `covalent` is Cys-Cys. How much of SPIN-Seq's
+AUPRC in those classes is ESM-2 and how much is a 21x21 lookup table? This baseline
 responde: estima P(tipo | aa_i, aa_j, faixa de |i-j|) contando o split de TREINO e
-pontua o teste no MESMO portão denso, sem ver embedding nenhum.
+scores the test set at the SAME dense gate, without seeing any embedding.
 
-É de propósito a versão FORTE da objeção: a tabela captura a interação completa entre os
-dois aminoácidos (uma regressão logística com one-hot aditivo seria mais fraca, e vencer
-uma baseline fraca não prova nada). Suavização para a marginal da classe é obrigatória —
-`covalent` tem 1.628 positivos espalhados por milhares de células, e sem suavizar a tabela
-vira ruído e o campeão "ganha" por artefato.
+This is deliberately the STRONG version of the objection: the table captures the full
+interaction between the two amino acids (a logistic regression with additive one-hot would
+be weaker, and beating a weak baseline proves nothing). Smoothing towards the class marginal
+is mandatory - `covalent` has 1,628 positives spread over thousands of cells, and without
+smoothing the table becomes noise and the champion "wins" by artefact.
 
 Uso:
     python src/baseline_propensity.py --config configs/esm650m_aa.yaml --fit
@@ -31,15 +31,15 @@ from src.data.pair_dataset import (AA_UNK, EXCLUDED_TYPES, files_from_manifest,
 from src.eval_dense import load_chain
 from src.metrics import DIVISORS, RANGES, TopLAccumulator
 
-N_AA = AA_UNK + 1                       # 21 símbolos (20 AAs + desconhecido)
-SEP_EDGES = np.array([3, 4, 5, 6, 12, 24, 50, 100])  # alinhadas às faixas de metrics.RANGES
+N_AA = AA_UNK + 1                       # 21 symbols (20 AAs + unknown)
+SEP_EDGES = np.array([3, 4, 5, 6, 12, 24, 50, 100])  # aligned with the ranges in metrics.RANGES
 N_BINS = len(SEP_EDGES)
 N_CELLS = N_AA * N_AA * N_BINS
 DEFAULT_TABLE = "outputs/propensity_table.npz"
 
 
 def pair_cells(aa: np.ndarray, vi: np.ndarray, vj: np.ndarray) -> np.ndarray:
-    """Célula (par de AA não-ordenado x faixa de separação) de cada par (i,j)."""
+    """Cell (unordered AA pair x separation range) of each pair (i,j)."""
     a, b = aa[vi], aa[vj]
     code = np.minimum(a, b) * N_AA + np.maximum(a, b)
     bins = np.searchsorted(SEP_EDGES, np.abs(vi - vj), side="right") - 1
@@ -47,7 +47,7 @@ def pair_cells(aa: np.ndarray, vi: np.ndarray, vj: np.ndarray) -> np.ndarray:
 
 
 def fit(cfg: dict, split: str = "train") -> dict:
-    """Conta positivos e pares válidos por célula no split dado. Só lê rótulos."""
+    """Counts positives and valid pairs per cell in the given split. Reads labels only."""
     seq_sep = int(cfg["arpeggio"]["seq_sep_min"])
     emb_dir = cfg["paths"]["embeddings"]
     files = files_from_manifest(cfg, split)
@@ -59,7 +59,7 @@ def fit(cfg: dict, split: str = "train") -> dict:
     n_used = 0
     for lf in files:
         name = os.path.splitext(os.path.basename(lf))[0]
-        # mesmo filtro do treino: cadeia sem embedding nunca entrou no ajuste do campeão
+        # same filter as training: a chain without an embedding never entered the champion fit
         if not os.path.exists(os.path.join(emb_dir, f"{name}.npz")):
             continue
         l = np.load(lf, allow_pickle=True)
@@ -92,10 +92,10 @@ def fit(cfg: dict, split: str = "train") -> dict:
 
 
 def smooth(counts: dict, alpha: float) -> tuple[np.ndarray, np.ndarray]:
-    """Suaviza para a marginal da classe: p = (num + a*prior) / (den + a).
+    """Smooths towards the class marginal: p = (num + a*prior) / (den + a).
 
-    Sem isso, células com contagem baixa (o caso de `covalent`) devolveriam 0 ou 1
-    por acidente amostral e a baseline seria artificialmente fraca.
+    Without this, low-count cells (the `covalent` case) would return 0 or 1 by sampling
+    accident and the baseline would be artificially weak.
     """
     den, num_c, num_t = counts["den"], counts["num_c"], counts["num_t"]
     tot = max(den.sum(), 1.0)
@@ -113,10 +113,10 @@ def load_table(path: str = DEFAULT_TABLE) -> dict:
 
 
 def predict_propensity(table, ch, device=None, sel=None, use_esm=None):
-    """Assinatura compatível com predict_mlp/predict_conv2d: devolve (pc, pt).
+    """Signature compatible with predict_mlp/predict_conv2d: returns (pc, pt).
 
-    `sel` é ignorado (a tabela já vem indexada por nome); mantido na assinatura para
-    poder entrar no lugar de um modelo em eval/bootstrap sem caso especial.
+    `sel` is ignored (the table is already indexed by name); it is kept in the signature so
+    the baseline can stand in for a model in eval/bootstrap with no special case.
     """
     cells = pair_cells(ch["aa"], ch["vi"], ch["vj"])
     order = [table["names"].index(n) for n in ch["names"]]
@@ -128,7 +128,7 @@ def main():
     ap.add_argument("--config", default="configs/esm650m_aa.yaml")
     ap.add_argument("--table", default=DEFAULT_TABLE)
     ap.add_argument("--fit", action="store_true", help="reajusta a tabela no treino")
-    ap.add_argument("--alpha", type=float, default=50.0, help="força da suavização")
+    ap.add_argument("--alpha", type=float, default=50.0, help="smoothing strength")
     ap.add_argument("--split", default="test")
     args = ap.parse_args()
 
@@ -137,7 +137,7 @@ def main():
     emb_dir = cfg["paths"]["embeddings"]
 
     if args.fit or not os.path.exists(args.table):
-        print(">> ajustando a tabela no split TRAIN (só rótulos, sem embedding)...")
+        print(">> fitting the table on the TRAIN split (labels only, no embedding)...")
         counts = fit(cfg, "train")
         p_c, p_t = smooth(counts, args.alpha)
         os.makedirs(os.path.dirname(args.table), exist_ok=True)
@@ -146,11 +146,11 @@ def main():
                             den=counts["den"])
         occ = int((counts["den"] > 0).sum())
         print(f"   cadeias de treino={counts['n_chains']} pares={counts['den'].sum():,.0f}")
-        print(f"   células ocupadas={occ}/{N_CELLS} alpha={args.alpha}")
+        print(f"   occupied cells={occ}/{N_CELLS} alpha={args.alpha}")
         print(f"   tabela salva em {args.table}")
 
     table = load_table(args.table)
-    print(f">> baseline=propensão aa_i x aa_j x faixa(|i-j|) "
+    print(f">> baseline=propensity aa_i x aa_j x range(|i-j|) "
           f"treino={table['n_chains']} cadeias alpha={table['alpha']:g}")
 
     files = files_from_manifest(cfg, args.split)
@@ -164,8 +164,9 @@ def main():
         ef = os.path.join(emb_dir, f"{name}.npz")
         if not os.path.exists(ef):
             continue
-        # load_chain (e não leitura direta do rótulo) para avaliar EXATAMENTE as mesmas
-        # cadeias do campeão: é o teste emb.shape[0]==L que descarta 5hbl_A e 9qlx_A.
+        # load_chain (rather than reading the label directly) so as to evaluate EXACTLY the
+        # same chains as the champion: it is the emb.shape[0]==L test that drops 5hbl_A and
+        # 9qlx_A.
         ch = load_chain(ef, lf, seq_sep, keep_emb=False)
         if ch is None:
             continue
@@ -180,7 +181,7 @@ def main():
         sep = np.abs(vi - vj)
         yc = ch["tgt_c"][vi, vj]
         # float16/uint8 no acumulado: 5,18 M pares x 8 classes cabem em ~120 MB em vez de
-        # ~480 MB. AUPRC é rank-based, então a precisão reduzida não muda o número.
+        # ~480 MB. AUPRC is rank-based, so the reduced precision does not change the number.
         gc_p.append(pc.astype(np.float16)); gc_t.append(yc.astype(np.uint8))
         acc_c.add(pc, yc, sep, ch["L"])
         for k in range(len(names)):
@@ -200,11 +201,11 @@ def main():
         yt = np.concatenate(gt_t[k])
         pk = np.concatenate(gt_p[k])
         ap_t[n] = float(average_precision_score(yt, pk)) if yt.sum() > 0 else float("nan")
-        gt_t[k], gt_p[k] = None, None  # libera antes da próxima classe
+        gt_t[k], gt_p[k] = None, None  # free before the next class
         del yt, pk
     macro = float(np.nanmean(list(ap_t.values())))
 
-    print(f"\n== AVALIAÇÃO DENSA ({args.split}, propensão) — todos os pares válidos ==")
+    print(f"\n== DENSE EVALUATION ({args.split}, propensity) - all valid pairs ==")
     print(f"AUPRC_contact     = {ap_c:.3f}")
     print(f"AUPRC_types_macro = {macro:.3f}")
     print(f"{'classe':12s} {'AUPRC':>6s}  " + "  ".join(f"L/{d}" if d > 1 else "L"
@@ -217,13 +218,13 @@ def main():
         print(f"{n:12s} {ap_t[n]:6.3f}  " +
               "  ".join(f"{tl[f'long/L{d}' if d > 1 else 'long/L']:.3f}" for d in DIVISORS))
 
-    print("\n== Top-L por faixa de separação (contato) ==")
+    print("\n== Top-L per separation range (contact) ==")
     print(f"{'faixa':8s} " + "  ".join(f"L/{d}" if d > 1 else "L" for d in DIVISORS))
     for rng in list(RANGES) + ["all"]:
         print(f"{rng:8s} " +
               "  ".join(f"{tl_c[f'{rng}/L{d}' if d > 1 else f'{rng}/L']:.3f}" for d in DIVISORS))
 
-    print("\n== Top-L (L) por classe x faixa de separação ==")
+    print("\n== Top-L (L) per class x separation range ==")
     print(f"{'classe':12s} " + "  ".join(f"{r:>7s}" for r in list(RANGES) + ["all"]))
     for k, n in enumerate(names):
         tl = acc_t[k].mean()

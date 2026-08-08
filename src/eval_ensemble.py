@@ -1,7 +1,7 @@
 """Ensemble no portao denso — media de probabilidades de dois modelos.
 
-Cada modelo tem seu proprio config (embeddings/vocabulario). As cadeias do split sao as
-mesmas (mesma chave de nome); as probabilidades sao alinhadas por NOME de classe e mediadas.
+Each model has its own config (embeddings/vocabulary). The split chains are the same
+(same name key); the probabilities are aligned BY CLASS NAME and averaged.
 Serve de sanity-check da complementaridade (ex.: MLP-650M + conv2d-v2-150M) antes de apostar
 no treino conjunto. Mesmo protocolo do eval_dense (todos os pares validos, AUPRC + Top-L).
 
@@ -92,7 +92,7 @@ def main():
 
     for lf in files:
         name = os.path.splitext(os.path.basename(lf))[0]
-        # cada leg carrega a cadeia com SEU proprio embedding
+        # each leg loads the chain with ITS OWN embedding
         chs = []
         ok = True
         for leg in legs:

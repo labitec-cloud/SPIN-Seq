@@ -1,11 +1,11 @@
-"""Métricas de contact prediction: Top-L por classe e por faixa de separação.
+"""Contact-prediction metrics: Top-L per class and per separation range.
 
-Top-L (e Top-L/2, Top-L/5) = precisão entre as L predições mais confiantes de uma cadeia,
-onde L é o comprimento da cadeia. É a convenção da área e dá um número mais representativo que
-o AUPRC global (avalia só as predições confiantes, não todos os pares). Calculado POR CADEIA e
-depois promediado sobre as cadeias (ignorando as sem positivos naquele recorte).
+Top-L (and Top-L/2, Top-L/5) = precision among the L most confident predictions of a chain,
+where L is the chain length. It is the convention of the field and gives a more representative
+number than the global AUPRC (it scores only the confident predictions, not every pair). Computed
+PER CHAIN and then averaged over chains (ignoring those with no positives in that slice).
 
-Faixas de separação sequencial |i-j| (convenção estilo CASP):
+Sequence-separation ranges |i-j| (CASP-style convention):
 - short  6–11 · medium 12–23 · long >=24 · all >= seq_sep_min do treino.
 """
 from __future__ import annotations
@@ -17,7 +17,7 @@ DIVISORS = (1, 2, 5)  # Top-L, Top-L/2, Top-L/5
 
 
 def top_l_precision(prob: np.ndarray, is_pos: np.ndarray, L: int, divisor: int) -> float:
-    """Precisão entre os top-(L/divisor) pares por probabilidade, para uma cadeia/classe."""
+    """Precision among the top-(L/divisor) pairs by probability, for one chain/class."""
     n = prob.shape[0]
     if n == 0 or is_pos.sum() == 0:
         return float("nan")
@@ -27,7 +27,7 @@ def top_l_precision(prob: np.ndarray, is_pos: np.ndarray, L: int, divisor: int) 
 
 
 def chain_top_l(prob: np.ndarray, is_pos: np.ndarray, sep: np.ndarray, L: int) -> dict:
-    """Top-L/2/5 de uma cadeia/classe, por faixa de separação e no total (all)."""
+    """Top-L/2/5 for one chain/class, per separation range and overall (all)."""
     out = {}
     for rng, (lo, hi) in RANGES.items():
         m = (sep >= lo) & (sep < hi)
@@ -40,7 +40,7 @@ def chain_top_l(prob: np.ndarray, is_pos: np.ndarray, sep: np.ndarray, L: int) -
 
 
 class TopLAccumulator:
-    """Acumula Top-L por cadeia e devolve a média (nanmean) por recorte."""
+    """Accumulates Top-L per chain and returns the mean (nanmean) per slice."""
 
     def __init__(self):
         self._rows: list[dict] = []

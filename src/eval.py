@@ -1,11 +1,11 @@
-"""Avaliação no split de TEST (cadeias nunca vistas) — número oficial do baseline.
+"""Evaluation on the TEST split (never-seen chains) - the official baseline number.
 
-Carrega um checkpoint (best.pt), roda no split `test` do manifest e reporta AUPRC por
-classe + macro e AUPRC de contato — as MESMAS métricas do treino/curva, para comparação direta.
+Loads a checkpoint (best.pt), runs on the manifest's `test` split and reports per-class +
+macro AUPRC and contact AUPRC - the SAME metrics as training/curve, for direct comparison.
 
-O checkpoint pode ter sido treinado com um vocabulário de tipos diferente do atual (ex. antes
-de remover xbond/metal). Por isso o modelo é dimensionado pelos tipos SALVOS no checkpoint e as
-colunas são alinhadas ao dataset atual POR NOME de tipo — nada de índice cru.
+The checkpoint may have been trained with a type vocabulary different from the current one
+(e.g. before removing xbond/metal). That is why the model is sized by the types SAVED in the
+checkpoint and the columns are aligned to the current dataset BY TYPE NAME - never by raw index.
 
 Uso:
     python src/eval.py                                  # outputs/baseline/best.pt no split test
@@ -34,7 +34,7 @@ from src.train import auprc_per_type
 
 
 def drop_inconsistent(files, emb_dir):
-    """Remove cadeias cujo embedding não bate com o comprimento do rótulo (bug de dados)."""
+    """Drops chains whose embedding does not match the label length (a data bug)."""
     good, bad = [], 0
     for lf in files:
         name = os.path.splitext(os.path.basename(lf))[0]
@@ -48,7 +48,7 @@ def drop_inconsistent(files, emb_dir):
         else:
             bad += 1
     if bad:
-        print(f">> descartadas {bad} cadeias com emb/label inconsistentes")
+        print(f">> dropped {bad} chains with inconsistent emb/label")
     return good
 
 
@@ -87,11 +87,11 @@ def main():
     files = files_from_manifest(cfg, args.split)
     files = drop_inconsistent(files, cfg["paths"]["embeddings"])
     ds = ChainPairDataset(cfg, files, rng)
-    names = ds.type_names  # vocabulário atual (pode ser subconjunto do ckpt)
+    names = ds.type_names  # current vocabulary (may be a subset of the ckpt)
     print(f">> split={args.split} cadeias={len(ds)} feat_dim={ds.feat_dim} "
           f"tipos_avaliados={len(names)}: {names}")
 
-    # mapeia cada tipo avaliado para a coluna correspondente na saída do modelo (ordem do ckpt)
+    # map each evaluated type to the matching column in the model output (ckpt order)
     missing = [n for n in names if n not in ckpt_types]
     if missing:
         raise RuntimeError(f"tipos do dataset ausentes no ckpt: {missing}")
@@ -110,7 +110,7 @@ def main():
     ap_contact = float(average_precision_score(tc, pc)) if tc.sum() > 0 else float("nan")
     macro = float(np.mean(list(ap_types.values()))) if ap_types else 0.0
 
-    print(f"\n== AVALIAÇÃO ({args.split}) ==")
+    print(f"\n== EVALUATION ({args.split}) ==")
     print(f"AUPRC_contact     = {ap_contact:.3f}")
     print(f"AUPRC_types_macro = {macro:.3f}")
     for n in names:

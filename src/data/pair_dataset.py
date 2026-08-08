@@ -9,18 +9,18 @@ import torch
 from torch.utils.data import Dataset
 
 
-# tipos fora do vocabulário: 'proximal' é fallback de proximidade sem tipo;
-# 'xbond'/'metal' têm 0 exemplos no treino (ver PLANO.md 18.5/18.6.1) → inaprendíveis.
+# types outside the vocabulary: 'proximal' is a fallback for proximity with no type;
+# 'xbond'/'metal' have 0 training examples -> unlearnable.
 EXCLUDED_TYPES = {"proximal", "xbond", "metal"}
 
-# Alfabeto de 20 AAs; índice 20 = desconhecido/padding (X, gaps, resíduos não-padrão).
+# Alphabet of 20 AAs; index 20 = unknown/padding (X, gaps, non-standard residues).
 AA_ALPHABET = "ACDEFGHIKLMNPQRSTVWY"
 AA_TO_IDX = {a: i for i, a in enumerate(AA_ALPHABET)}
 AA_UNK = len(AA_ALPHABET)  # 20
 
 
 def seq_to_idx(seq: str) -> np.ndarray:
-    """Sequência → vetor int64 de índices no AA_ALPHABET (não-padrão → AA_UNK)."""
+    """Sequence -> int64 vector of AA_ALPHABET indices (non-standard -> AA_UNK)."""
     return np.array([AA_TO_IDX.get(c, AA_UNK) for c in seq], dtype=np.int64)
 
 
@@ -43,18 +43,18 @@ class ChainSample:
         self.types = [str(t) for t in l["types"]]
         assert self.emb.shape[0] == self.L
         self.prox_idx = self.types.index("proximal")
-        # canais de tipo = tudo menos os excluídos (proximal + classes com 0 exemplos)
+        # type channels = everything except the excluded ones (proximal + classes with 0 examples)
         self.type_channels = [k for k, t in enumerate(self.types) if t not in EXCLUDED_TYPES]
         self.type_names = [self.types[k] for k in self.type_channels]
         self.pos_set = set(zip(self.idx_i.tolist(), self.idx_j.tolist()))
 
 
 class ChainPairDataset(Dataset):
-    """Dataset lazy: um item = uma cadeia inteira (positivos + negativos amostrados).
+    """Lazy dataset: one item = one whole chain (positives + sampled negatives).
 
-    As features de par são geradas on-the-fly no __getitem__ e NUNCA materializadas
-    em massa, o que mantém a RAM baixa mesmo com milhares de cadeias. Os negativos
-    são reamostrados a cada acesso (nova época = novos negativos).
+    The pair features are generated on the fly in __getitem__ and are NEVER materialised
+    in bulk, which keeps RAM low even with thousands of chains. The negatives are
+    resampled on every access (a new epoch = new negatives).
     """
 
     def __init__(self, cfg: dict, files: list[str], rng: np.random.Generator):
@@ -73,7 +73,7 @@ class ChainPairDataset(Dataset):
             if os.path.exists(ef):
                 self.pairs.append((ef, lf))
         if not self.pairs:
-            raise RuntimeError("nenhuma cadeia com embedding+rótulo encontrada")
+            raise RuntimeError("no chain with both embedding and label was found")
 
         # metadados (feat_dim, tipos) a partir da 1ª cadeia
         s0 = ChainSample(*self.pairs[0])
@@ -138,7 +138,7 @@ class ChainPairDataset(Dataset):
 
 
 def collate_chains(batch):
-    """Concatena os pares de várias cadeias em um único mini-batch."""
+    """Concatenates the pairs of several chains into a single mini-batch."""
     xs, ycs, yts, yds, dms = zip(*batch)
     return (
         torch.cat(xs), torch.cat(ycs), torch.cat(yts),
@@ -147,7 +147,7 @@ def collate_chains(batch):
 
 
 def compute_pos_weights(files: list[str], cfg: dict) -> torch.Tensor:
-    """pos_weight por tipo a partir de uma varredura barata dos rótulos (só labels)."""
+    """Per-type pos_weight from a cheap sweep over the labels (labels only)."""
     neg_ratio = int(cfg["train"]["neg_ratio"])
     label_dir = cfg["paths"]["labels"]
     emb_dir = cfg["paths"]["embeddings"]
@@ -174,9 +174,9 @@ def compute_pos_weights(files: list[str], cfg: dict) -> torch.Tensor:
 
 
 def compute_class_weights(files: list[str], cfg: dict, cap: float = 3.0) -> torch.Tensor:
-    """Peso por classe: inverso-√ da frequência, normalizado pela classe MAIS abundante
-    (=1) e limitado a `cap`. Dá ~cap:1 às raras sem deixar a classe raríssima (covalent)
-    dominar. Ordem = type_channels (idêntica a compute_pos_weights)."""
+    """Per-class weight: inverse square root of frequency, normalised by the MOST abundant class
+    (=1) and capped at `cap`. Gives ~cap:1 to the rare classes without letting the rarest one
+    (covalent) dominate. Order = type_channels (identical to compute_pos_weights)."""
     emb_dir = cfg["paths"]["embeddings"]
     pos = None
     for lf in files:
@@ -199,7 +199,7 @@ def compute_class_weights(files: list[str], cfg: dict, cap: float = 3.0) -> torc
 
 
 def files_from_manifest(cfg: dict, split: str) -> list[str]:
-    """Lista os rótulos de um split (train/val/test) segundo data/manifest.csv."""
+    """Lists the labels of a split (train/val/test) according to data/manifest.csv."""
     manifest = cfg["dataset"]["manifest"]
     label_dir = cfg["paths"]["labels"]
     out = []
