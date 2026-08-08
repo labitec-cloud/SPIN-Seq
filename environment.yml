@@ -1,0 +1,29 @@
+# Ambiente conda para o SPIN-Seq.
+# Uso: conda env create -f environment.yml && conda activate spin-seq
+# Recomendado se você tiver conda/miniforge, pois facilita openbabel (dep. do Arpeggio).
+name: spin-seq
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - pip
+  # --- supervisão (Arpeggio) ---
+  - openbabel            # protonação / manipulação química (dep. do pdbe-arpeggio)
+  - gemmi                # leitura de mmCIF/PDB
+  # --- utilitários científicos ---
+  - numpy
+  - scipy
+  - pandas
+  - h5py
+  - pyyaml
+  - tqdm
+  - biopython
+  - networkx
+  - scikit-learn
+  - matplotlib
+  # --- deps que instalamos via pip (melhor cobertura de versões) ---
+  - pip:
+      - torch            # CUDA detectado automaticamente pela roda oficial
+      - fair-esm         # ESM-2
+      - pdbe-arpeggio    # gerador de supervisão (RIN tipado)

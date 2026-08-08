@@ -1,0 +1,29 @@
+# Alternativa via venv + pip (máquina sem conda).
+# Uso:
+#   python3 -m venv .venv && source .venv/bin/activate
+#   pip install -U pip
+#   pip install -r requirements.txt
+#
+# NOTA sobre o Arpeggio: 'pdbe-arpeggio' depende do OpenBabel, cuja instalação via
+# pip pode exigir libs de sistema. Se falhar, use o environment.yml (conda) só para
+# a parte de supervisão. Veja scripts/setup_env.sh.
+
+# --- ML / features ---
+torch
+fair-esm
+
+# --- científico ---
+numpy
+scipy
+pandas
+h5py
+pyyaml
+tqdm
+biopython
+networkx
+scikit-learn
+matplotlib
+
+# --- supervisão ---
+gemmi
+pdbe-arpeggio

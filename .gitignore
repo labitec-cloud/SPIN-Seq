@@ -1,0 +1,58 @@
+# Claude Code / editor
+.claude/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.ipynb_checkpoints/
+
+# Dados e artefatos pesados (não versionar)
+# Usa /data/* e não /data/ : o git não avalia negação dentro de um diretório
+# já excluído, então o diretório precisa continuar "visitável".
+/data/*
+*.h5
+*.npy
+*.npz
+*.pt
+*.pth
+*.ckpt
+
+# EXCEÇÃO: o manifesto define o split treino/val/teste por cluster. São 164 KB e
+# sem ele um colaborador que reconstrua o dataset gera um split DIFERENTE, o que
+# torna qualquer número incomparável com os já medidos.
+!/data/manifest.csv
+
+# Saídas — /outputs/* pelo mesmo motivo de /data/*. As subpastas (que guardam os
+# .pt) seguem excluídas; só os arquivos soltos no topo são reincluídos abaixo.
+/outputs/*
+/logs/
+wandb/
+*.log
+
+# EXCEÇÃO: os pesos (.pt, 265 MB) ficam de fora, mas a EVIDÊNCIA fica dentro —
+# portões densos, bootstraps e curva de aprendizado somam 136 KB. Sem eles,
+# conferir um número exige re-rodar 7 avaliações de 494 cadeias.
+# Tem de vir DEPOIS de *.log para a negação valer.
+!/outputs/*.txt
+!/outputs/*.csv
+!/outputs/*.log
+# .npz soltos no topo são tabelas pequenas, não pesos: propensity_table.npz tem 72 KB
+# e é o que permite repontuar o baseline sem recontar o split de treino inteiro.
+!/outputs/*.npz
+
+# SO
+.DS_Store
+
+# Documentos de trabalho PESSOAIS — enviados por fora, nunca versionados.
+/PLANO.md
+/PLANO_EXECUCAO.md
+/DADOS.md
+/resumo.tex
+/resumo_projeto.txt
+/revisao_literatura.txt
+/avaliacao_sugestoes.txt
+/docs/
