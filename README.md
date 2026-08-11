@@ -9,8 +9,10 @@ interact?"**. It returns a residue graph with **typed** edges (hydrogen bond, hy
 
 ![SPIN-Seq pipeline](figures/fig1_pipeline.png)
 
-> 📄 **Reviewing the manuscript?** Start at **[REVIEWERS.md](REVIEWERS.md)** — it maps every
-> number in the paper to the file in this repository that produced it.
+> 📄 **The manuscript is in this repository:** [`paper/spin-seq-bsb2026.pdf`](paper/spin-seq-bsb2026.pdf)
+> (6 pages), with its LaTeX source alongside it. **Reviewing it?** Start at
+> **[REVIEWERS.md](REVIEWERS.md)** — it maps every number in the paper to the file here that
+> produced it.
 
 ---
 
@@ -377,6 +379,7 @@ intermediates batch by batch, doubling the dataset costs ~2.6 GB, not ~29 GB.
 ## Repository layout
 
 ```
+paper/              📄 the manuscript (PDF) and its LaTeX source
 REVIEWERS.md        📄 every number in the manuscript mapped to its source file
 figures/            pipeline figure (TikZ source + PNG)
 configs/            experiment YAMLs (esm650m_aa.yaml = champion recipe)
@@ -422,9 +425,9 @@ on all 8 classes; the model already overfits, so the bottleneck is **data**, not
 
 ## Publication status
 
-⚠️ **The manuscript "SPIN-Seq: predicting the typed residue interaction network from sequence" is
-a preprint under submission. It has not been peer-reviewed, accepted or published.** This
-repository is released together with the submission so that the reported numbers can be checked.
+⚠️ **The manuscript in [`paper/`](paper/) is a preprint under submission. It has not been
+peer-reviewed, accepted or published.** It is included here so that the reported numbers can be
+checked against the code and the raw evaluation outputs that produced them.
 
 A citation entry will be added here **only if and when the paper is accepted**. Until then, please
 refer to this repository directly and describe the work as unpublished.

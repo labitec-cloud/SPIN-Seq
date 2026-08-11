@@ -3,8 +3,11 @@
 This file maps each claim in the manuscript **“SPIN-Seq: predicting the typed residue interaction
 network from sequence”** to the file in this repository that produced it.
 
-⚠️ **The manuscript is a preprint under submission to BSB 2026. It has not been peer-reviewed,
-accepted or published.**
+📄 **The manuscript is in this repository:**
+[`paper/spin-seq-bsb2026.pdf`](paper/spin-seq-bsb2026.pdf) (6 pages), LaTeX source alongside it.
+
+⚠️ **It is a preprint under submission to BSB 2026. It has not been peer-reviewed, accepted or
+published.**
 
 Nothing here is a summary written after the fact: `outputs/` holds the **raw stdout** of the runs.
 Model weights (`.pt`, ~265 MB) are not versioned; every number that does not require them is.
